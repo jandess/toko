@@ -429,13 +429,13 @@ body.no-scroll {
 }
 
 /* ============================================ */
-/* TEKSTUR SEGITIGA (TRIANGLE PATTERN) SEPERTI GAMBAR 2 */
+/* TEKSTUR SEGITIGA TIPIS & JARANG (Seperti Gambar 2) */
 /* ============================================ */
 .bg-diamond-pattern {
   background-color: #FCF6E3; /* Warna dasar krem muda */
   background-image: 
-    repeating-linear-gradient(60deg, #D8A47F 0px, #D8A47F 2px, transparent 2px, transparent 22px),
-    repeating-linear-gradient(-60deg, #D8A47F 0px, #D8A47F 2px, transparent 2px, transparent 22px),
-    repeating-linear-gradient(0deg, #D8A47F 0px, #D8A47F 2px, transparent 2px, transparent 22px);
-  background-size: 44px 44px; /* Ukuran segitiga */
+    repeating-linear-gradient(60deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 50px),
+    repeating-linear-gradient(-60deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 50px),
+    repeating-linear-gradient(0deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 50px);
+  background-size: 100px 100px; /* Ukuran pola besar */
 }
