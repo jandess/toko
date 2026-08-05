@@ -1064,15 +1064,33 @@ function removeFromCartById(id) {
 }
 function updateCartUI() {
   const badge = document.getElementById('cart-badge');
+  const navBadge = document.getElementById('nav-cart-badge'); // badge baru untuk nav bawah
   const count = cart.reduce((acc, item) => acc + item.qty, 0);
-  if (count > 0) {
-    badge.innerText = count;
-    badge.classList.remove('hidden');
-    badge.style.fontFamily = 'Arial, sans-serif';
-    badge.style.fontWeight = 'bold';
-    badge.style.fontSize = '11px';
-  } else {
-    badge.classList.add('hidden');
+  
+  // Update badge header (jika masih ada)
+  if (badge) {
+    if (count > 0) {
+      badge.innerText = count;
+      badge.classList.remove('hidden');
+      badge.style.fontFamily = 'Arial, sans-serif';
+      badge.style.fontWeight = 'bold';
+      badge.style.fontSize = '11px';
+    } else {
+      badge.classList.add('hidden');
+    }
+  }
+  
+  // Update badge nav bawah
+  if (navBadge) {
+    if (count > 0) {
+      navBadge.innerText = count;
+      navBadge.classList.remove('hidden');
+      navBadge.style.fontFamily = 'Arial, sans-serif';
+      navBadge.style.fontWeight = 'bold';
+      navBadge.style.fontSize = '11px';
+    } else {
+      navBadge.classList.add('hidden');
+    }
   }
 }
 function renderCart() {
