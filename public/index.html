@@ -140,50 +140,36 @@
 
 <body
   class="font-body-md text-on-surface bg-surface selection:bg-secondary-container selection:text-on-secondary-container">
-  <header
-    class="fixed top-0 left-0 w-full px-margin-mobile md:px-margin-desktop py-4 z-[60] bg-surface/80 backdrop-blur-md shadow-sm"
-    id="main-header">
+  
+  <!-- HEADER BARU: Hanya tombol back dan judul halaman -->
+  <header class="fixed top-0 left-0 w-full px-margin-mobile md:px-margin-desktop py-4 z-[60] bg-surface/80 backdrop-blur-md shadow-sm" id="main-header">
     <div class="max-w-container-max mx-auto flex justify-between items-center">
-      <div class="flex items-center gap-3 md:gap-8">
-        <button class="text-primary hidden" id="header-back-btn" onclick="goBack()">
-          <i class="fa-solid fa-arrow-left text-2xl"></i>
-        </button>
-        <img id="header-logo" src="" alt="Djandes" class="h-9 md:h-10 w-auto hidden object-contain">
-        <div id="header-brand-text" class="flex flex-col justify-center min-w-0">
-          <span class="font-serif text-base md:text-xl font-bold text-secondary leading-none">Djandes</span>
-          <span class="text-on-surface-variant text-[9px] md:text-[11px] italic tracking-wider block truncate">Sweet &
-            Savoury</span>
-        </div>
-        <h1 class="font-headline-lg-mobile md:text-headline-lg font-semibold text-primary hidden" id="header-title">
-        </h1>
-        <nav class="hidden md:flex items-center gap-6 ml-4" id="desktop-nav">
-          <button class="nav-link text-label-md font-medium text-primary hover:text-secondary transition-colors"
-            onclick="navigateTo('home')">Beranda</button>
-          <button
-            class="nav-link text-label-md font-medium text-on-surface-variant hover:text-secondary transition-colors"
-            onclick="navigateTo('cart')">Pesanan</button>
-          <button
-            class="nav-link text-label-md font-medium text-on-surface-variant hover:text-secondary transition-colors"
-            onclick="navigateTo('favs')">Favorit</button>
-          <button
-            class="nav-link text-label-md font-medium text-on-surface-variant hover:text-secondary transition-colors"
-            onclick="navigateTo('profile')">Profile</button>
-        </nav>
-      </div>
-      <div class="flex items-center gap-4">
-        <button class="relative text-primary p-2 hover:bg-secondary-container/20 rounded-full transition-colors"
-          onclick="navigateTo('cart')">
-          <i class="fa-solid fa-cart-shopping text-2xl"></i>
-          <span
-            class="absolute top-1 right-1 bg-error text-on-error text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden"
-            id="cart-badge">0</span>
-        </button>
-      </div>
+      <!-- Tombol back (kiri) -->
+      <button class="text-primary hidden" id="header-back-btn" onclick="goBack()">
+        <i class="fa-solid fa-arrow-left text-2xl"></i>
+      </button>
+
+      <!-- Judul halaman (tengah) -->
+      <h1 class="font-headline-lg-mobile md:text-headline-lg font-semibold text-primary hidden" id="header-title"></h1>
+
+      <!-- Kosong kanan (untuk keseimbangan) -->
+      <div class="w-8"></div>
     </div>
   </header>
 
   <main class="pt-20 md:pt-24 pb-28 md:pb-20 max-w-container-max mx-auto">
     <section class="page-section px-margin-mobile md:px-margin-desktop" id="page-home">
+      
+      <!-- LOGO & BRAND DI TENGAH (di atas search) -->
+      <div class="flex flex-col items-center justify-center mb-6 pt-4">
+        <img id="header-logo" src="" alt="Djandes" class="h-14 md:h-20 w-auto object-contain hidden mb-2">
+        <div class="flex flex-col items-center text-center">
+          <span class="font-serif text-2xl md:text-4xl font-bold text-secondary leading-none">Djandes</span>
+          <span class="text-on-surface-variant text-xs md:text-sm italic tracking-wider">Sweet & Savoury</span>
+        </div>
+      </div>
+
+      <!-- SEARCH BAR -->
       <div class="mb-8 md:mb-12 relative max-w-2xl mx-auto">
         <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
           <i class="fa-solid fa-magnifying-glass text-outline"></i>
@@ -198,11 +184,15 @@
           <i class="fa-solid fa-circle-xmark text-xl"></i>
         </button>
       </div>
+
+      <!-- CATEGORIES -->
       <div class="mb-8 md:mb-12 -mx-margin-mobile md:mx-0">
         <div
           class="flex overflow-x-auto md:flex-wrap md:justify-center no-scrollbar px-margin-mobile md:px-0 space-x-3 md:gap-3 md:space-x-0"
           id="category-container"></div>
       </div>
+
+      <!-- PRODUCT GRID -->
       <div class="flex justify-between items-center mb-6">
         <h2 class="font-title-md md:text-headline-lg text-primary">Rekomendasi Spesial</h2>
       </div>
@@ -460,6 +450,7 @@
     </section>
   </main>
 
+  <!-- IMAGE VIEWER -->
   <div id="image-viewer">
     <button class="viewer-close-btn" onclick="closeImageViewer()">
       <i class="fa-solid fa-xmark text-3xl"></i>
@@ -484,39 +475,40 @@
     </div>
   </div>
 
+  <!-- TOAST NOTIFICATION -->
   <div id="toast">
     <i class="fa-solid fa-circle-check toast-icon"></i>
     <span class="toast-message" id="toast-message">Berhasil ditambahkan</span>
   </div>
 
+  <!-- FAB WHATSAPP -->
   <a href="#" target="_blank" id="home-fab"
     class="fixed right-6 bottom-24 md:bottom-6 bg-whatsapp-green text-white p-3 rounded-full shadow-lg hover:scale-110 active:scale-90 transition-transform duration-200 z-40 flex items-center justify-center w-14 h-14 hidden">
     <i class="fa-brands fa-whatsapp text-3xl"></i>
   </a>
 
-  <nav
-    class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile pb-safe pt-2 bg-surface shadow-[0_-4px_15px_rgba(51,33,13,0.05)] rounded-t-xl h-20">
-    <button
-      class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-secondary-container bg-secondary-container transition-all"
-      id="nav-home" onclick="navigateTo('home')">
+  <!-- NAVIGASI BAWAH (Mobile Only) -->
+  <nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile pb-safe pt-2 bg-surface shadow-[0_-4px_15px_rgba(51,33,13,0.05)] rounded-t-xl h-20">
+    <button class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-secondary-container bg-secondary-container transition-all" id="nav-home" onclick="navigateTo('home')">
       <i class="fa-solid fa-house"></i>
       <span class="font-label-sm text-label-sm">Beranda</span>
     </button>
-    <button
-      class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-surface-variant transition-all"
-      id="nav-cart" onclick="navigateTo('cart')">
-      <i class="fa-solid fa-receipt"></i>
+    
+    <button class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-surface-variant transition-all" id="nav-cart" onclick="navigateTo('cart')">
+      <!-- Icon Pesanan dengan badge jumlah item -->
+      <div class="relative">
+        <i class="fa-solid fa-receipt"></i>
+        <span class="absolute -top-1 -right-2 bg-error text-on-error text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden" id="nav-cart-badge">0</span>
+      </div>
       <span class="font-label-sm text-label-sm">Pesanan</span>
     </button>
-    <button
-      class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-surface-variant transition-all"
-      id="nav-favs" onclick="navigateTo('favs')">
+    
+    <button class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-surface-variant transition-all" id="nav-favs" onclick="navigateTo('favs')">
       <i class="fa-solid fa-heart"></i>
       <span class="font-label-sm text-label-sm">Favs</span>
     </button>
-    <button
-      class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-surface-variant transition-all"
-      id="nav-profile" onclick="navigateTo('profile')">
+    
+    <button class="nav-item flex flex-col items-center justify-center rounded-2xl px-4 py-1 text-on-surface-variant transition-all" id="nav-profile" onclick="navigateTo('profile')">
       <i class="fa-solid fa-user"></i>
       <span class="font-label-sm text-label-sm">Profile</span>
     </button>
