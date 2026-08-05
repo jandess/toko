@@ -141,8 +141,8 @@
 <body
   class="font-body-md text-on-surface bg-surface selection:bg-secondary-container selection:text-on-secondary-container">
   
-  <!-- HEADER BARU: Hanya tombol back dan judul halaman -->
-  <header class="fixed top-0 left-0 w-full px-margin-mobile md:px-margin-desktop py-4 z-[60] bg-surface/80 backdrop-blur-md shadow-sm" id="main-header">
+  <!-- HEADER DINAMIS: Hanya muncul di halaman selain home -->
+  <header class="fixed top-0 left-0 w-full px-margin-mobile md:px-margin-desktop py-4 z-[60] bg-surface/80 backdrop-blur-md shadow-sm hidden" id="main-header">
     <div class="max-w-container-max mx-auto flex justify-between items-center">
       <!-- Tombol back (kiri) -->
       <button class="text-primary hidden" id="header-back-btn" onclick="goBack()">
@@ -157,7 +157,7 @@
     </div>
   </header>
 
-  <main class="pt-20 md:pt-24 pb-28 md:pb-20 max-w-container-max mx-auto">
+  <main class="pt-0 md:pt-0 pb-28 md:pb-20 max-w-container-max mx-auto">
     <section class="page-section px-margin-mobile md:px-margin-desktop" id="page-home">
       
       <!-- LOGO & BRAND DI TENGAH (di atas search) -->
