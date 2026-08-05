@@ -403,3 +403,20 @@ body.no-scroll {
   }
   header, nav, #main-header, #toast, .mt-8.space-y-4, button, #home-fab, #image-viewer { display: none !important; }
 }
+/* ============================================ */
+/* HEADER DINAMIS - HOME TIDAK ADA HEADER */
+/* ============================================ */
+/* Saat header disembunyikan di home, tidak ada jarak atas */
+#page-home {
+  padding-top: 0 !important;
+}
+
+/* Logo & brand di home tidak tertutup header */
+#page-home .flex-col.items-center {
+  margin-top: 0.5rem;
+}
+
+/* Header hidden saat home - tidak mengganggu layout */
+#main-header.hidden {
+  display: none !important;
+}
