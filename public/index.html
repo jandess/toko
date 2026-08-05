@@ -136,6 +136,17 @@
   </script>
 
   <link rel="stylesheet" href="/style.css" />
+  
+  <!-- CSS untuk Tekstur Background -->
+  <style>
+    .bg-diamond-pattern {
+      background-color: #fffae5;
+      background-image: 
+        linear-gradient(45deg, #e8dec9 0.8px, transparent 0.8px),
+        linear-gradient(-45deg, #e8dec9 0.8px, transparent 0.8px);
+      background-size: 30px 30px;
+    }
+  </style>
 </head>
 
 <body
@@ -160,12 +171,12 @@
   <main class="pt-0 md:pt-0 pb-28 md:pb-20 max-w-container-max mx-auto">
     <section class="page-section px-margin-mobile md:px-margin-desktop" id="page-home">
       
-      <!-- LOGO & BRAND DI TENGAH (di atas search) -->
-      <div class="flex flex-col items-center justify-center mb-6 pt-4">
-        <img id="header-logo" src="" alt="Djandes" class="h-14 md:h-20 w-auto object-contain hidden mb-2">
+      <!-- LOGO & BRAND DI TENGAH (di atas search) dengan TEKSTUR -->
+      <div class="flex flex-col items-center justify-center mb-8 pt-4 w-full rounded-b-3xl bg-diamond-pattern px-6 py-8 shadow-sm border-b border-outline-variant/10">
+        <img id="header-logo" src="" alt="Djandes" class="h-14 md:h-20 w-auto object-contain hidden mb-3">
         <div class="flex flex-col items-center text-center">
-          <span class="font-serif text-2xl md:text-4xl font-bold text-secondary leading-none">Djandes</span>
-          <span class="text-on-surface-variant text-xs md:text-sm italic tracking-wider">Sweet & Savoury</span>
+          <span class="font-serif text-2xl md:text-4xl font-bold text-secondary leading-none tracking-wide">DJANDES</span>
+          <span class="text-on-surface-variant text-xs md:text-sm italic tracking-wider mt-1">Sweet & Savoury</span>
         </div>
       </div>
 
