@@ -429,12 +429,12 @@ body.no-scroll {
 }
 
 /* ============================================ */
-/* TEKSTUR BACKGROUND UNTUK LOGO & BRAND DJANDES */
+/* TEKSTUR DIAMOND (GARIS SILANG) YANG JELAS */
 /* ============================================ */
 .bg-diamond-pattern {
-  background-color: #fffae5;
+  background-color: #fffae5; /* Warna dasar krem muda */
   background-image: 
-    linear-gradient(45deg, #e8dec9 0.8px, transparent 0.8px),
-    linear-gradient(-45deg, #e8dec9 0.8px, transparent 0.8px);
-  background-size: 30px 30px;
+    linear-gradient(45deg, #e8dec9 2px, transparent 2px),
+    linear-gradient(-45deg, #e8dec9 2px, transparent 2px);
+  background-size: 40px 40px; /* Ukuran diamond lebih besar */
 }
