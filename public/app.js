@@ -241,41 +241,52 @@ function updateView(pageId) {
       link.classList.remove('text-on-surface-variant', 'font-medium');
     }
   });
+  
+  // ==============================================
+  // HEADER DINAMIS: HOME = HIDDEN, LAINNYA = SHOW
+  // ==============================================
+  const header = document.getElementById('main-header');
   const headerTitle = document.getElementById('header-title');
   const backBtn = document.getElementById('header-back-btn');
   const fab = document.getElementById('home-fab');
+  
   fab.classList.add('hidden');
   backBtn.classList.add('hidden');
+  headerTitle.classList.add('hidden');
+  
   if (pageId === 'home') {
+    // HOME: header disembunyikan total
+    header.classList.add('hidden');
     headerTitle.innerText = '';
     fab.classList.remove('hidden');
-  } else if (pageId === 'detail') {
-    headerTitle.innerText = 'Detail Produk';
+  } else {
+    // SELAIN HOME: header ditampilkan
+    header.classList.remove('hidden');
     backBtn.classList.remove('hidden');
-  } else if (pageId === 'cart') {
-    headerTitle.innerText = 'Pesanan';
-    backBtn.classList.add('hidden');
-    renderCart();
-    renderHistory();
-  } else if (pageId === 'box-detail') {
-    headerTitle.innerText = 'Detail Kemasan';
-    backBtn.classList.remove('hidden');
-    showBoxDetail(true);
-  } else if (pageId === 'checkout') {
-    headerTitle.innerText = 'Checkout Form';
-    backBtn.classList.remove('hidden');
-  } else if (pageId === 'profile') {
-    headerTitle.innerText = 'Profile Info';
-    renderProfile();
-  } else if (pageId === 'favs') {
-    headerTitle.innerText = 'Favorit';
-    renderFavorites();
-  } else if (pageId === 'invoice') {
-    headerTitle.innerText = 'Ringkasan Invoice';
-    backBtn.classList.remove('hidden');
+    headerTitle.classList.remove('hidden');
+    
+    if (pageId === 'detail') {
+      headerTitle.innerText = 'Detail Produk';
+    } else if (pageId === 'cart') {
+      headerTitle.innerText = 'Pesanan';
+      renderCart();
+      renderHistory();
+    } else if (pageId === 'box-detail') {
+      headerTitle.innerText = 'Detail Kemasan';
+      showBoxDetail(true);
+    } else if (pageId === 'checkout') {
+      headerTitle.innerText = 'Checkout Form';
+    } else if (pageId === 'profile') {
+      headerTitle.innerText = 'Profile Info';
+      renderProfile();
+    } else if (pageId === 'favs') {
+      headerTitle.innerText = 'Favorit';
+      renderFavorites();
+    } else if (pageId === 'invoice') {
+      headerTitle.innerText = 'Ringkasan Invoice';
+    }
   }
 }
-
 // --- PROFILE ---
 function renderProfile() {
   const p = profileData || {};
@@ -1062,16 +1073,12 @@ function removeFromCartById(id) {
   renderCart();
   showToast("Produk dihapus dari keranjang");
 }
-
-// ================================================
-// ✨ PERUBAHAN PENTING DI SINI ✨
-// ================================================
 function updateCartUI() {
-  const badge = document.getElementById('cart-badge'); // badge header (sudah dihapus tapi tetap aman)
-  const navBadge = document.getElementById('nav-cart-badge'); // badge nav bawah
+  const badge = document.getElementById('cart-badge');
+  const navBadge = document.getElementById('nav-cart-badge'); // badge baru untuk nav bawah
   const count = cart.reduce((acc, item) => acc + item.qty, 0);
   
-  // Update badge header jika masih ada (tidak dipakai lagi)
+  // Update badge header (jika masih ada)
   if (badge) {
     if (count > 0) {
       badge.innerText = count;
@@ -1083,7 +1090,7 @@ function updateCartUI() {
       badge.classList.add('hidden');
     }
   }
-
+  
   // Update badge nav bawah
   if (navBadge) {
     if (count > 0) {
@@ -1097,8 +1104,6 @@ function updateCartUI() {
     }
   }
 }
-// ================================================
-
 function renderCart() {
   const list = document.getElementById('cart-items-list');
   const emptyMsg = document.getElementById('cart-empty-msg');
