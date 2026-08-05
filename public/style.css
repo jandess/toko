@@ -404,19 +404,25 @@ body.no-scroll {
   header, nav, #main-header, #toast, .mt-8.space-y-4, button, #home-fab, #image-viewer { display: none !important; }
 }
 /* ============================================ */
-/* HEADER DINAMIS - HOME TIDAK ADA HEADER */
+/* HEADER PADDING - Agar tidak menutupi konten */
 /* ============================================ */
-/* Saat header disembunyikan di home, tidak ada jarak atas */
+/* Halaman yang memiliki header (selain home) */
+#page-detail,
+#page-cart,
+#page-box-detail,
+#page-profile,
+#page-favs,
+#page-checkout,
+#page-invoice {
+  padding-top: 80px !important;
+}
+
+/* Home tidak perlu padding atas */
 #page-home {
   padding-top: 0 !important;
 }
 
-/* Logo & brand di home tidak tertutup header */
-#page-home .flex-col.items-center {
-  margin-top: 0.5rem;
-}
-
-/* Header hidden saat home - tidak mengganggu layout */
-#main-header.hidden {
-  display: none !important;
+/* Saat header hidden, tidak ada jarak atas */
+#main-header.hidden + main .page-section {
+  padding-top: 0 !important;
 }
