@@ -429,13 +429,12 @@ body.no-scroll {
 }
 
 /* ============================================ */
-/* TEKSTUR SEGITIGA TIPIS & JARANG (Seperti Gambar 2) */
+/* POLA DIAMOND / WAJIK TIPIS & JARANG (Gambar 2) */
 /* ============================================ */
 .bg-diamond-pattern {
   background-color: #FCF6E3; /* Warna dasar krem muda */
   background-image: 
-    repeating-linear-gradient(60deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 50px),
-    repeating-linear-gradient(-60deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 50px),
-    repeating-linear-gradient(0deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 50px);
-  background-size: 100px 100px; /* Ukuran pola besar */
+    repeating-linear-gradient(45deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 40px),
+    repeating-linear-gradient(-45deg, #D8A47F 0px, #D8A47F 0.8px, transparent 0.8px, transparent 40px);
+  background-size: 100% 100%;
 }
