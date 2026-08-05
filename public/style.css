@@ -429,12 +429,13 @@ body.no-scroll {
 }
 
 /* ============================================ */
-/* TEKSTUR DIAMOND (GARIS SILANG) SEPERTI GAMBAR 2 */
+/* TEKSTUR SEGITIGA (TRIANGLE PATTERN) SEPERTI GAMBAR 2 */
 /* ============================================ */
 .bg-diamond-pattern {
-  background-color: #FCF6E3; /* Warna dasar krem muda (seperti gambar) */
+  background-color: #FCF6E3; /* Warna dasar krem muda */
   background-image: 
-    linear-gradient(45deg, #D8A47F 2px, transparent 2px),
-    linear-gradient(-45deg, #D8A47F 2px, transparent 2px);
-  background-size: 48px 48px; /* Ukuran diamond yang pas dan proporsional */
+    repeating-linear-gradient(60deg, #D8A47F 0px, #D8A47F 2px, transparent 2px, transparent 22px),
+    repeating-linear-gradient(-60deg, #D8A47F 0px, #D8A47F 2px, transparent 2px, transparent 22px),
+    repeating-linear-gradient(0deg, #D8A47F 0px, #D8A47F 2px, transparent 2px, transparent 22px);
+  background-size: 44px 44px; /* Ukuran segitiga */
 }
