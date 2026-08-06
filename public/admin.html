@@ -21,8 +21,15 @@
     .main-content.mobile { padding: 12px 12px 90px 12px; margin-top: 110px; }
     .modal-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
     
-    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: all 0.2s; cursor: pointer; }
     .action-btn:active { transform: scale(0.96); }
+
+    .item-card { transition: all 0.2s; }
+    .item-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .filter-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 500; }
+    .filter-badge.bestseller { background: #fef3c7; color: #92400e; }
+    .filter-badge.new { background: #dbeafe; color: #1e40af; }
+    .filter-badge.promo { background: #fce4ec; color: #b71c1c; }
 
     @media (max-width: 767px) {
       .sidebar { display: none; }
@@ -41,27 +48,27 @@
 
 <div id="app" class="min-h-screen flex flex-col">
   <!-- Header Utama -->
-  <header class="bg-white border-b border-slate-200 fixed top-0 left-0 w-full z-50 h-16 px-4 flex items-center justify-between gap-3 shadow-xs">
+  <header class="bg-white border-b border-slate-200 fixed top-0 left-0 w-full z-50 h-16 px-4 flex items-center justify-between gap-3 shadow-sm">
     <div class="flex items-center gap-2 shrink-0">
       <span class="material-symbols-outlined text-2xl text-[#735c00]">storefront</span>
       <h1 class="text-base font-bold text-slate-800">Djandes Admin</h1>
     </div>
 
-    <!-- Pilihan Menu Lengkap Akses Cepat (Desktop & Mobile Responsif) -->
+    <!-- Menu Akses Cepat (Desktop & Mobile Responsif) -->
     <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
       <button onclick="loadDataFromGithubPublic()" class="action-btn bg-blue-50 text-blue-700 hover:bg-blue-100" title="Tarik dari CDN (Tanpa Token)">
         <span class="material-symbols-outlined text-sm">cloud_download</span> <span class="hidden sm:inline">Tarik Cloud</span>
       </button>
-      <button onclick="pushDataToGithub()" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs" title="Simpan Menggunakan PAT">
+      <button onclick="pushDataToGithub()" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm" title="Simpan Menggunakan PAT">
         <span class="material-symbols-outlined text-sm">cloud_upload</span> <span>Simpan</span>
       </button>
       
       <div class="h-4 w-[1px] bg-slate-300 mx-0.5"></div>
 
-      <!-- Fitur Impor File JSON yang Kini Muncul di Mode Mobile -->
-      <label class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
+      <!-- Import/Export -->
+      <label class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200">
         <span class="material-symbols-outlined text-sm">upload_file</span> <span class="hidden sm:inline">Impor</span>
-        <input type="file" accept=".json" id="importFile" class="hidden" />
+        <input type="file" accept=".json" id="importFile" class="hidden" onchange="handleImport(event)" />
       </label>
       <button onclick="exportData()" class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200">
         <span class="material-symbols-outlined text-sm">download</span> <span class="hidden sm:inline">Ekspor</span>
@@ -69,7 +76,7 @@
     </div>
   </header>
 
-  <!-- Mobile Secondary Action Bar (Akses Mudah Menu di Layar Kecil) -->
+  <!-- Mobile Secondary Action Bar (Hanya Muncul di Mobile) -->
   <div class="md:hidden fixed top-16 left-0 w-full bg-white border-b border-slate-200 px-3 py-2 z-40 flex items-center justify-between gap-2">
     <div class="relative flex-1">
       <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
@@ -88,6 +95,12 @@
     <div class="nav-item" data-tab="packagingVariants"><span class="material-symbols-outlined">style</span><span>Varian</span></div>
     <div class="nav-item" data-tab="profile"><span class="material-symbols-outlined">person</span><span>Profil Toko</span></div>
   </aside>
+
+  <!-- Loading Indicator -->
+  <div id="loadingIndicator" class="fixed top-24 left-1/2 -translate-x-1/2 bg-white px-4 py-2 rounded-full shadow-md z-[55] flex items-center gap-2 hidden border">
+    <span class="material-symbols-outlined animate-spin text-[#735c00]">sync</span>
+    <span class="text-sm text-gray-700 font-medium" id="loadingText">Memuat data...</span>
+  </div>
 
   <!-- Konten Utama Desktop -->
   <main class="main-content desktop" id="mainDesktop">
@@ -115,48 +128,125 @@
     <div class="nav-item" data-tab="packagingVariants"><span class="material-symbols-outlined">style</span><span>Varian</span></div>
     <div class="nav-item" data-tab="profile"><span class="material-symbols-outlined">person</span><span>Profil</span></div>
   </nav>
+
+  <!-- MODAL UTAMA -->
+  <div id="modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col p-4 relative mx-2 overflow-hidden">
+      <button onclick="closeModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10 bg-gray-100 rounded-full p-1">
+        <span class="material-symbols-outlined text-sm block">close</span>
+      </button>
+      <h2 id="modalTitle" class="text-lg font-bold mb-3 pr-8 shrink-0">Form</h2>
+      <div id="modalBody" class="overflow-y-auto flex-1 pr-1 pb-2"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  // Konfigurasi Repository
+  // ==================== KONFIGURASI ====================
   const CONFIG = {
-    user: 'jandess',
-    repo: 'katalog',
-    branch: 'main'
+    user: localStorage.getItem('gh_user') || 'jandess',
+    repo: localStorage.getItem('gh_repo') || 'katalog',
+    branch: localStorage.getItem('gh_branch') || 'main'
   };
 
   let data = { categories: [], packagingTypes: [], packagingVariants: [], products: [], profile: {} };
+  let defaultData = JSON.parse(JSON.stringify(data));
+  let currentTab = 'products';
+  let searchQuery = '';
 
-  // A. Tarik data publik otomatis tanpa butuh Token PAT
-  async function loadDataFromGithubPublic() {
-    try {
-      // Menggunakan CDN jsDelivr untuk auto-pull cepat tanpa menguras rate-limit
-      const cdnUrl = `https://cdn.jsdelivr.net/gh/${CONFIG.user}/${CONFIG.repo}@${CONFIG.branch}/data.json?t=${Date.now()}`;
-      const response = await fetch(cdnUrl);
-      if(!response.ok) throw new Error("Gagal mengambil data dari CDN CDN");
-      
-      data = await response.json();
-      renderCurrentTab();
-      console.log("Data publik berhasil diperbarui otomatis tanpa Token PAT.");
-    } catch(err) {
-      console.warn("Fallback ke file lokal:", err);
-      fetch('/data.json').then(res => res.json()).then(d => { data = d; renderCurrentTab(); });
+  // ==================== INISIALISASI ====================
+  document.addEventListener('DOMContentLoaded', () => {
+    // Bind click events untuk sidebar & bottom nav
+    document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+      item.addEventListener('click', () => { switchTab(item.dataset.tab, 'desktop'); });
+    });
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
+      item.addEventListener('click', () => { switchTab(item.dataset.tab, 'mobile'); });
+    });
+    
+    // Muat data awal
+    loadDataFromGithubPublic();
+  });
+
+  // ==================== NAVIGASI TABS ====================
+  function switchTab(tab, platform = 'desktop') {
+    currentTab = tab;
+    // Handle UI Aktif Desktop
+    if (platform === 'desktop' || platform === 'both') {
+      document.querySelectorAll('#mainDesktop .tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.querySelectorAll('.sidebar .nav-item').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+      });
+    }
+    // Handle UI Aktif Mobile
+    if (platform === 'mobile' || platform === 'both') {
+      document.querySelectorAll('#mainMobile .tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(`tab-${tab}-mobile`).classList.remove('hidden');
+      document.querySelectorAll('.bottom-nav .nav-item').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+      });
+    }
+    renderCurrentTab();
+  }
+
+  function renderCurrentTab() {
+    switch (currentTab) {
+      case 'products': renderProducts(); break;
+      case 'categories': renderCategories(); break;
+      case 'packagingTypes': renderPackagingTypes(); break;
+      case 'packagingVariants': renderPackagingVariants(); break;
+      case 'profile': renderProfileDisplay(); break;
     }
   }
 
-  // B. Hanya gunakan token PAT ketika melakukan aksi SIMPAN / PUSH
+  // ==================== CLOUD SYNC & IMPORT ====================
+  function toggleSpinner(show, text = 'Memuat data...') {
+    const ld = document.getElementById('loadingIndicator');
+    document.getElementById('loadingText').innerText = text;
+    if(show) ld.classList.remove('hidden');
+    else ld.classList.add('hidden');
+  }
+
+  async function loadDataFromGithubPublic() {
+    toggleSpinner(true, 'Menarik data dari CDN...');
+    try {
+      const cdnUrl = `https://cdn.jsdelivr.net/gh/${CONFIG.user}/${CONFIG.repo}@${CONFIG.branch}/data.json?t=${Date.now()}`;
+      const response = await fetch(cdnUrl);
+      if(!response.ok) throw new Error("Gagal mengambil data dari CDN");
+      
+      data = await response.json();
+      ensureArrays();
+      switchTab(currentTab, 'both');
+      showToast('Berhasil dimuat dari Cloud!');
+    } catch(err) {
+      console.warn("Fallback ke file lokal:", err);
+      try {
+        const localRes = await fetch('/data.json');
+        data = await localRes.json();
+        ensureArrays();
+        switchTab(currentTab, 'both');
+        showToast('Berhasil dimuat dari Lokal.');
+      } catch(e) {
+        showToast('Gagal memuat data!', 'error');
+      }
+    } finally {
+      toggleSpinner(false);
+    }
+  }
+
   async function pushDataToGithub() {
     const token = localStorage.getItem('gh_token');
     if(!token) {
-      alert("Aksi ini membutuhkan Personal Access Token (PAT). Silakan isi token di menu Profil terlebih dahulu!");
-      switchTab('profile');
+      showToast("Token GitHub belum diatur! Isi di menu Profil.", "error");
+      switchTab('profile', 'both');
       return;
     }
 
+    toggleSpinner(true, 'Menyimpan ke Cloud...');
     try {
       const url = `https://api.github.com/repos/${CONFIG.user}/${CONFIG.repo}/contents/data.json`;
-      
-      // Get SHA file terkini
       let sha = "";
       const getRes = await fetch(`${url}?ref=${CONFIG.branch}`, {
         headers: { 'Authorization': `token ${token}` }
@@ -166,38 +256,279 @@
         sha = fileData.sha;
       }
 
-      // Encode content ke base64
       const jsonStr = JSON.stringify(data, null, 2);
       const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
 
       const putRes = await fetch(url, {
         method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: `Admin update data.json [${new Date().toLocaleString()}]`,
-          content: base64Content,
-          sha: sha,
-          branch: CONFIG.branch
-        })
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Admin update data.json [${new Date().toLocaleString()}]`, content: base64Content, sha: sha, branch: CONFIG.branch })
       });
 
       if(putRes.ok) {
-        alert("Berhasil menyimpan data ke Cloud!");
+        showToast("Berhasil menyimpan ke GitHub!");
       } else {
-        throw new Error("Gagal menyimpan. Periksa izin Personal Access Token Anda.");
+        throw new Error("Gagal menyimpan. Cek token PAT.");
       }
     } catch(err) {
-      alert(err.message);
+      showToast(err.message, "error");
+    } finally {
+      toggleSpinner(false);
     }
   }
 
-  // Inisialisasi awal saat dokumen siap
-  document.addEventListener('DOMContentLoaded', () => {
-    loadDataFromGithubPublic();
-  });
+  function handleImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedData = JSON.parse(e.target.result);
+        if (importedData.products && importedData.categories) {
+          data = importedData;
+          ensureArrays();
+          renderCurrentTab();
+          showToast('Data berhasil diimpor! Jangan lupa Simpan Cloud.');
+        } else {
+          showToast('Format JSON salah!', 'error');
+        }
+      } catch (err) { showToast('Gagal membaca file JSON', 'error'); }
+    };
+    reader.readAsText(file);
+    event.target.value = ''; 
+  }
+
+  function exportData() {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'data.json'; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Data berhasil diekspor!');
+  }
+
+  function resetData() {
+    if (confirm('Reset semua data (Hanya di layar ini)?')) {
+      data = JSON.parse(JSON.stringify(defaultData));
+      ensureArrays(); renderCurrentTab();
+      showToast('Data direset.');
+    }
+  }
+
+  function handleGlobalSearch(val) {
+    searchQuery = val.toLowerCase().trim();
+    renderCurrentTab();
+  }
+
+  // ==================== UTILS & RENDERERS ====================
+  function ensureArrays() {
+    if (!data.categories) data.categories = [];
+    if (!data.packagingTypes) data.packagingTypes = [];
+    if (!data.packagingVariants) data.packagingVariants = [];
+    if (!data.products) data.products = [];
+    if (!data.profile) data.profile = {};
+  }
+  function generateId() { return Date.now() + Math.floor(Math.random() * 1000); }
+  function showToast(msg, type = 'success') {
+    alert(msg); // Simplified for safety, you can replace with custom toast UI
+  }
+  function openModal(title, contentHtml) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = contentHtml;
+    document.getElementById('modal').classList.remove('hidden');
+  }
+  function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+  // --- KATEGORI ---
+  function renderCategories() {
+    const html = buildHtml('Kategori', data.categories, (c) => c.name.toLowerCase().includes(searchQuery), 
+      (cat, idx) => `
+        <div class="bg-white p-3 rounded-lg border flex items-center justify-between gap-2 item-card">
+          <div><span class="font-medium">${cat.name}</span><span class="text-xs text-gray-400 ml-2">ID: ${cat.id}</span></div>
+          <div class="flex gap-1">
+            <button onclick="editCategory(${idx})" class="text-blue-600 hover:bg-blue-50 p-1 rounded"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="deleteCategory(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded"><span class="material-symbols-outlined text-sm">delete</span></button>
+          </div>
+        </div>
+      `, 'addCategory');
+    document.getElementById('tab-categories').innerHTML = html;
+    document.getElementById('tab-categories-mobile').innerHTML = html;
+  }
+  function addCategory() { openModal('Tambah Kategori', catForm()); }
+  function editCategory(idx) { openModal('Edit Kategori', catForm(idx)); }
+  function catForm(idx = null) {
+    const isEdit = idx !== null;
+    return `
+      <div class="space-y-3">
+        <div><label class="block text-sm font-medium mb-1">Nama Kategori</label><input id="catName" class="w-full box-border border rounded px-3 py-2 text-sm" value="${isEdit ? data.categories[idx].name : ''}" /></div>
+        <button onclick="saveCategory(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm font-medium w-full md:w-auto">Simpan</button>
+      </div>`;
+  }
+  function saveCategory(idx) {
+    const name = document.getElementById('catName').value.trim();
+    if (!name) return alert('Nama wajib diisi');
+    if (idx !== null) data.categories[idx].name = name;
+    else data.categories.push({ id: 'CAT' + generateId(), name });
+    closeModal(); renderCategories();
+  }
+  function deleteCategory(idx) { if (confirm('Hapus?')) { data.categories.splice(idx, 1); renderCategories(); } }
+
+  // --- TIPE KEMASAN ---
+  function renderPackagingTypes() {
+    const html = buildHtml('Tipe Kemasan', data.packagingTypes, (pt) => pt.id_tipe.toLowerCase().includes(searchQuery), 
+      (pt, idx) => `
+        <div class="bg-white p-3 rounded-lg border flex items-center justify-between gap-2 item-card">
+          <div><span class="font-medium">${pt.id_tipe}</span><span class="text-xs text-gray-400 ml-2">Rp ${pt.harga_tambahan}</span></div>
+          <div class="flex gap-1">
+            <button onclick="deletePackagingType(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded"><span class="material-symbols-outlined text-sm">delete</span></button>
+          </div>
+        </div>
+      `, 'addPackagingType');
+    document.getElementById('tab-packagingTypes').innerHTML = html;
+    document.getElementById('tab-packagingTypes-mobile').innerHTML = html;
+  }
+  function addPackagingType() {
+    openModal('Tambah Tipe Kemasan', `
+      <div class="space-y-3">
+        <div><label class="block text-sm font-medium mb-1">ID Tipe</label><input id="ptId" class="w-full border rounded px-3 py-2 text-sm" /></div>
+        <div><label class="block text-sm font-medium mb-1">Harga (Rp)</label><input id="ptPrice" type="number" class="w-full border rounded px-3 py-2 text-sm" value="0" /></div>
+        <button onclick="savePackagingType()" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm w-full md:w-auto">Simpan</button>
+      </div>`);
+  }
+  function savePackagingType() {
+    const id_tipe = document.getElementById('ptId').value.trim();
+    const harga_tambahan = parseInt(document.getElementById('ptPrice').value) || 0;
+    if (!id_tipe) return;
+    data.packagingTypes.push({ id_tipe, harga_tambahan });
+    closeModal(); renderPackagingTypes();
+  }
+  function deletePackagingType(idx) { if (confirm('Hapus?')) { data.packagingTypes.splice(idx, 1); renderPackagingTypes(); } }
+
+  // --- PRODUK ---
+  function renderProducts() {
+    const html = buildHtml('Produk', data.products, (p) => p.name.toLowerCase().includes(searchQuery), 
+      (p, idx) => {
+        const imgUrl = p.images && p.images.length ? p.images[0] : (p.img || '');
+        return `
+        <div class="bg-white p-3 rounded-lg border flex flex-col md:flex-row md:items-center gap-2 item-card">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <img src="${imgUrl}" class="w-12 h-12 rounded object-cover bg-gray-100 shrink-0" onerror="this.src='https://via.placeholder.com/40'" />
+            <div class="min-w-0 flex-1">
+              <span class="font-medium block truncate">${p.name}</span>
+              <div class="text-xs text-gray-500">Rp ${p.price?.toLocaleString('id-ID')} • ${p.cat}</div>
+            </div>
+          </div>
+          <div class="flex gap-1 justify-end shrink-0">
+            <button onclick="editProduct(${idx})" class="text-blue-600 hover:bg-blue-50 p-1 rounded"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="deleteProduct(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded"><span class="material-symbols-outlined text-sm">delete</span></button>
+          </div>
+        </div>`
+      }, 'addProduct');
+    document.getElementById('tab-products').innerHTML = html;
+    document.getElementById('tab-products-mobile').innerHTML = html;
+  }
+
+  function addProduct() { openModal('Tambah Produk', productForm(null)); }
+  function editProduct(idx) { openModal('Edit Produk', productForm(idx)); }
+  function productForm(idx) {
+    const isEdit = idx !== null;
+    const p = isEdit ? data.products[idx] : {};
+    const catOptions = data.categories.map(c => `<option value="${c.name}" ${p.cat === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
+    return `
+      <div class="space-y-3">
+        <div><label class="block text-sm font-medium mb-1">Nama</label><input id="pName" class="w-full border rounded px-3 py-2 text-sm" value="${p.name || ''}" /></div>
+        <div><label class="block text-sm font-medium mb-1">Harga</label><input id="pPrice" type="number" class="w-full border rounded px-3 py-2 text-sm" value="${p.price || ''}" /></div>
+        <div><label class="block text-sm font-medium mb-1">Kategori</label><select id="pCat" class="w-full border rounded px-3 py-2 text-sm"><option value="">Pilih</option>${catOptions}</select></div>
+        <div><label class="block text-sm font-medium mb-1">Gambar URL</label><textarea id="pImages" class="w-full border rounded px-3 py-2 text-sm" rows="2">${p.images ? p.images.join('\\n') : (p.img||'')}</textarea></div>
+        <div><label class="block text-sm font-medium mb-1">Deskripsi</label><textarea id="pDesc" class="w-full border rounded px-3 py-2 text-sm" rows="2">${p.desc || ''}</textarea></div>
+        <div class="flex flex-wrap gap-3">
+          <label class="text-sm"><input type="checkbox" id="pOut" ${p.isOutOfStock ? 'checked' : ''} /> Habis</label>
+          <label class="text-sm"><input type="checkbox" id="pBest" ${p.bestseller ? 'checked' : ''} /> Best Seller</label>
+        </div>
+        <button onclick="saveProduct(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm w-full md:w-auto">Simpan</button>
+      </div>`;
+  }
+  function saveProduct(idx) {
+    const name = document.getElementById('pName').value.trim();
+    const price = parseInt(document.getElementById('pPrice').value) || 0;
+    const cat = document.getElementById('pCat').value;
+    const images = document.getElementById('pImages').value.split('\n').map(x => x.trim()).filter(x => x);
+    const desc = document.getElementById('pDesc').value.trim();
+    if (!name) return alert('Nama wajib!');
+    const obj = { id: idx !== null ? data.products[idx].id : generateId(), name, price, cat, img: images[0]||'', images, desc, isOutOfStock: document.getElementById('pOut').checked, bestseller: document.getElementById('pBest').checked };
+    if (idx !== null) data.products[idx] = obj;
+    else data.products.push(obj);
+    closeModal(); renderProducts();
+  }
+  function deleteProduct(idx) { if (confirm('Hapus?')) { data.products.splice(idx, 1); renderProducts(); } }
+
+  // --- VARIAN KEMASAN ---
+  function renderPackagingVariants() {
+    const html = buildHtml('Varian Kemasan', data.packagingVariants, (pv) => pv.name.toLowerCase().includes(searchQuery), 
+      (pv, idx) => `
+        <div class="bg-white p-3 rounded-lg border flex items-center justify-between gap-2 item-card">
+          <div><span class="font-medium">${pv.name}</span><span class="text-xs text-gray-400 ml-2">Tipe: ${pv.id_tipe}</span></div>
+          <div class="flex gap-1">
+            <button onclick="deletePackagingVariant(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded"><span class="material-symbols-outlined text-sm">delete</span></button>
+          </div>
+        </div>
+      `, null);
+    document.getElementById('tab-packagingVariants').innerHTML = html;
+    document.getElementById('tab-packagingVariants-mobile').innerHTML = html;
+  }
+  function deletePackagingVariant(idx) { if (confirm('Hapus?')) { data.packagingVariants.splice(idx, 1); renderPackagingVariants(); } }
+
+  // --- PROFIL ---
+  function renderProfileDisplay() {
+    const p = data.profile || {};
+    const html = `
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold">Profil Toko</h2>
+      </div>
+      <div class="bg-white rounded-lg border p-4 space-y-3 shadow-sm">
+        <h3 class="text-sm font-bold border-b pb-1.5 text-gray-700">Informasi Dasar</h3>
+        <div class="grid grid-cols-1 gap-3 text-sm">
+          <div><strong class="text-gray-500">Nama Toko:</strong> ${p.name || '-'}</div>
+          <div><strong class="text-gray-500">WA:</strong> ${p.whatsapp || '-'}</div>
+          <div><strong class="text-gray-500">IG:</strong> ${p.instagram || '-'}</div>
+          <div><strong class="text-gray-500">Alamat:</strong> ${p.address || '-'}</div>
+        </div>
+        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded text-sm">
+          <strong class="block mb-2 text-amber-900">Pengaturan Cloud Storage</strong>
+          <div>User: <input id="setGhUser" value="${CONFIG.user}" class="border rounded px-2 py-1 text-xs w-full mb-2"></div>
+          <div>Repo: <input id="setGhRepo" value="${CONFIG.repo}" class="border rounded px-2 py-1 text-xs w-full mb-2"></div>
+          <div>Token PAT: <input id="setGhToken" type="password" placeholder="ghp_xxxx..." value="${localStorage.getItem('gh_token')||''}" class="border rounded px-2 py-1 text-xs w-full mb-2"></div>
+          <button onclick="saveCloudSettings()" class="bg-amber-700 text-white px-3 py-1 rounded text-xs mt-2">Simpan Cloud Settings</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('tab-profile').innerHTML = html;
+    document.getElementById('tab-profile-mobile').innerHTML = html;
+  }
+  
+  function saveCloudSettings() {
+    localStorage.setItem('gh_user', document.getElementById('setGhUser').value.trim());
+    localStorage.setItem('gh_repo', document.getElementById('setGhRepo').value.trim());
+    localStorage.setItem('gh_token', document.getElementById('setGhToken').value.trim());
+    alert("Konfigurasi Cloud tersimpan!");
+    location.reload();
+  }
+
+  // --- HELPER BIKIN HTML LISTING ---
+  function buildHtml(title, arrayData, filterFn, rowRenderer, addFnName) {
+    const filtered = arrayData.filter(filterFn);
+    let html = `
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold">${title} (${filtered.length})</h2>
+        ${addFnName ? `<button onclick="${addFnName}()" class="bg-[#735c00] text-white px-3 py-1.5 rounded text-sm flex items-center gap-1"><span class="material-symbols-outlined text-sm">add</span> Tambah</button>` : ''}
+      </div>
+      <div class="space-y-2">`;
+    filtered.forEach(item => {
+      const idx = arrayData.indexOf(item);
+      html += rowRenderer(item, idx);
+    });
+    return html + `</div>`;
+  }
 </script>
 </body>
 </html>
