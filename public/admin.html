@@ -26,7 +26,7 @@
     .main-content.mobile { padding: 16px 16px 100px 16px; margin-top: 120px; }
     .modal-overlay { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); }
     
-    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; transition: all 0.2s; cursor: pointer; shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; transition: all 0.2s; cursor: pointer; }
     .action-btn:active { transform: scale(0.95); }
 
     .item-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
@@ -206,9 +206,22 @@
       item.addEventListener('click', () => { switchTab(item.dataset.tab, 'mobile'); });
     });
     
-    // Murni muat lokal/fallback awal tanpa auto-pull agar editan lokal aman
-    loadDataFromGithubPublic(false);
+    // MURNI LOKAL / FALLBACK: Tidak ada tarikan otomatis ke cloud saat web dibuka/di-reload!
+    loadDataLocallyOnly();
   });
+
+  async function loadDataLocallyOnly() {
+    try {
+      const localRes = await fetch('/data.json');
+      data = await localRes.json();
+      ensureArrays();
+      switchTab(currentTab, 'both');
+    } catch(e) {
+      // Jika file data.json lokal kosong/tidak ada, pakai default kosong yang aman
+      ensureArrays();
+      switchTab(currentTab, 'both');
+    }
+  }
 
   function switchTab(tab, platform = 'desktop') {
     currentTab = tab;
@@ -259,10 +272,10 @@
     }, 3000);
   }
 
-  // Tarik Data (Hanya berjalan jika tombol "Tarik" diklik atau pertama kali fallback lokal)
+  // Tarik Data (HANYA BERJALAN JIKA TOMBOL "TARIK" DIKLIK MANUAL)
   async function loadDataFromGithubPublic(isManual = false) {
     const conf = getRepoConfig();
-    if(isManual) toggleSpinner(true, 'Menarik data Cloud...');
+    toggleSpinner(true, 'Menarik data Cloud...');
     try {
       const cdnUrl = `https://cdn.jsdelivr.net/gh/${conf.user}/${conf.repo}@${conf.branch}/data.json?t=${Date.now()}`;
       const response = await fetch(cdnUrl);
@@ -273,17 +286,9 @@
       switchTab(currentTab, 'both');
       if(isManual) showToast('Berhasil menarik data terbaru dari Cloud!');
     } catch(err) {
-      try {
-        const localRes = await fetch('/data.json');
-        data = await localRes.json();
-        ensureArrays();
-        switchTab(currentTab, 'both');
-        if(isManual) showToast('Dimuat dari file lokal.');
-      } catch(e) {
-        if(isManual) showToast('Gagal memuat data!', 'error');
-      }
+      if(isManual) showToast('Gagal menarik data dari Cloud!', 'error');
     } finally {
-      if(isManual) toggleSpinner(false);
+      toggleSpinner(false);
     }
   }
 
@@ -495,7 +500,7 @@
   }
 
   function resetData() {
-    if (confirm('Bersihkan layar? (Data Cloud aman)')) {
+    if (confirm('Bersihkan layar? (Data lokal di browser akan direset)')) {
       data = JSON.parse(JSON.stringify(defaultData));
       ensureArrays(); renderCurrentTab();
       showToast('Layar dibersihkan.');
@@ -743,7 +748,7 @@
   }
   function deleteProduct(idx) { if (confirm('Hapus produk ini?')) { data.products.splice(idx, 1); renderProducts(); } }
 
-  // Profil Lengkap dengan Perbaikan Kolom URL Logo
+  // Profil Lengkap
   function renderProfileDisplay() {
     const conf = getRepoConfig();
     const p = data.profile || {};
@@ -824,7 +829,6 @@
         
         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Utama (URL)</label>
-           <!-- Perbaikan layout agar input URL logo lebih lebar -->
            <div class="flex flex-col sm:flex-row gap-2">
              <input id="editProfileLogo" class="input-modern bg-white flex-1" value="${p.logo || ''}" placeholder="https://..." />
              <label class="cursor-pointer bg-white text-slate-600 px-5 py-3 rounded-xl border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-slate-100 transition-colors shrink-0">
