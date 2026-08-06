@@ -64,31 +64,34 @@
 <body>
 
 <div id="app" class="min-h-screen flex flex-col">
-  <!-- Header Glassmorphism (Tanpa Judul Bawaan, Hanya Tombol Aksi) -->
+  <!-- Header Glassmorphism (Tombol Warna Berbeda-beda) -->
   <header class="bg-white/90 backdrop-blur-lg border-b border-slate-100 fixed top-0 left-0 w-full z-50 h-[72px] px-5 flex items-center justify-between gap-2 shadow-xs">
     <div class="flex items-center gap-2">
        <span class="material-symbols-outlined text-amber-600 text-2xl">admin_panel_settings</span>
        <span class="font-extrabold text-slate-800 text-sm tracking-tight hidden sm:inline">Panel Kontrol</span>
     </div>
 
-    <!-- Menu Tombol Aksi Lengkap dengan Teks (Tanpa Ikon Saja) -->
+    <!-- Tombol Simpel dengan Warna Berbeda -->
     <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-      <!-- Tombol Tarik Manual (Aman dari timpa otomatis) -->
-      <button onclick="loadDataFromGithubPublic(true)" class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200">
-        <span class="material-symbols-outlined text-[16px]">cloud_download</span> Tarik Cloud
+      <!-- Tarik (Biru) -->
+      <button onclick="loadDataFromGithubPublic(true)" class="action-btn bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200">
+        <span class="material-symbols-outlined text-[16px]">cloud_download</span> Tarik
       </button>
 
-      <label class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
-        <span class="material-symbols-outlined text-[16px]">upload_file</span> Impor JSON
+      <!-- Impor (Ungu) -->
+      <label class="action-btn bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 cursor-pointer">
+        <span class="material-symbols-outlined text-[16px]">upload_file</span> Impor
         <input type="file" accept=".json" id="importFile" class="hidden" onchange="handleImport(event)" />
       </label>
 
-      <button onclick="exportData()" class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200">
+      <!-- Ekspor (Amber/Kuning) -->
+      <button onclick="exportData()" class="action-btn bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200">
         <span class="material-symbols-outlined text-[16px]">download</span> Ekspor
       </button>
       
-      <button onclick="pushDataToGithub()" class="action-btn bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-500/20">
-        <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload Cloud
+      <!-- Upload Cloud (Emerald/Hijau) -->
+      <button onclick="pushDataToGithub()" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm">
+        <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload
       </button>
     </div>
   </header>
@@ -209,7 +212,7 @@
       item.addEventListener('click', () => { switchTab(item.dataset.tab, 'mobile'); });
     });
     
-    // Tarik data otomatis SEKALI saja saat pertama buka web
+    // Saat pertama kali buka, coba baca local/default tanpa menimpa paksa dari CDN secara otomatis
     loadDataFromGithubPublic(false);
   });
 
@@ -262,7 +265,7 @@
     }, 3000);
   }
 
-  // Fungsi Tarik Cloud (Bisa manual lewat tombol, atau otomatis saat awal buka)
+  // Tarik Data (Hanya berjalan jika ditekan tombol "Tarik" atau initial load jika kosong)
   async function loadDataFromGithubPublic(isManual = false) {
     const conf = getRepoConfig();
     toggleSpinner(true, 'Menarik data Cloud...');
@@ -274,10 +277,10 @@
       data = await response.json();
       ensureArrays();
       switchTab(currentTab, 'both');
-      if(isManual) showToast('Berhasil menarik data terbaru dari Cloud!');
+      showToast('Berhasil menarik data terbaru dari Cloud!');
     } catch(err) {
       try {
-        const localRes = await fetch('/data.json');
+        const localRes = await fetch('data.json');
         data = await localRes.json();
         ensureArrays();
         switchTab(currentTab, 'both');
@@ -331,7 +334,6 @@
     }
   }
 
-  // Gallery & Upload Engine
   async function handleDirectUpload(fileElementId, targetInputId) {
     const conf = getRepoConfig();
     const fileCtrl = document.getElementById(fileElementId);
@@ -471,7 +473,6 @@
   }
   function closeGalleryModal() { document.getElementById('galleryModal').classList.add('hidden'); }
 
-  // Impor & Ekspor & Reset
   function handleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -799,7 +800,7 @@
           <h3 class="text-[15px] font-bold border-b border-slate-700/60 pb-4 text-white mb-6 flex items-center gap-2 relative z-10"><span class="material-symbols-outlined text-emerald-400">api</span> Konfigurasi Token GitHub</h3>
           
           <div class="space-y-4 relative z-10">
-            <p class="text-[12px] text-slate-400 mb-2 leading-relaxed bg-slate-800/50 p-4 rounded-2xl border border-slate-700">Isi pengaturan ini <b>hanya</b> untuk keperluan mengunggah Galeri Foto dan menekan tombol <span class="text-white font-bold">Upload Cloud</span>.</p>
+            <p class="text-[12px] text-slate-400 mb-2 leading-relaxed bg-slate-800/50 p-4 rounded-2xl border border-slate-700">Isi pengaturan ini <b>hanya</b> untuk keperluan mengunggah Galeri Foto dan menekan tombol <span class="text-white font-bold">Upload</span>.</p>
             
             <div class="grid grid-cols-2 gap-4">
                <div><label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Username Repo</label><input id="setGhUser" value="${conf.user}" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:border-emerald-500 outline-none transition-colors"></div>
@@ -829,12 +830,15 @@
         
         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Logo Utama (URL)</label>
-           <div class="flex gap-2">
-             <input id="editProfileLogo" class="input-modern bg-white flex-1" value="${p.logo || ''}" placeholder="https://..." />
-             <label class="cursor-pointer bg-white text-slate-600 px-4 rounded-xl border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-slate-100 transition-colors shrink-0">
-               <span class="material-symbols-outlined text-[18px]">upload</span> Upload
-               <input type="file" id="uploadLogoFile" onchange="handleDirectUpload('uploadLogoFile', 'editProfileLogo')" class="hidden" />
-             </label>
+           <!-- Perbaikan: Input URL Logo dibuat lebar penuh agar tidak sempit -->
+           <div class="space-y-2">
+             <input id="editProfileLogo" class="input-modern bg-white w-full" value="${p.logo || ''}" placeholder="https://..." />
+             <div class="flex justify-end">
+               <label class="cursor-pointer bg-white text-slate-600 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm hover:bg-slate-100 transition-colors">
+                 <span class="material-symbols-outlined text-[18px]">upload</span> Upload Logo Baru
+                 <input type="file" id="uploadLogoFile" onchange="handleDirectUpload('uploadLogoFile', 'editProfileLogo')" class="hidden" />
+               </label>
+             </div>
            </div>
         </div>
 
