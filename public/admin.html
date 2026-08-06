@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Djandes Admin Panel - Smart Cloud Edition</title>
+  <title>Djandes Admin Panel - Full Cloud Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
@@ -30,6 +30,9 @@
     .filter-badge.bestseller { background: #fef3c7; color: #92400e; }
     .filter-badge.new { background: #dbeafe; color: #1e40af; }
     .filter-badge.promo { background: #fce4ec; color: #b71c1c; }
+    .filter-badge.habis { background: #64748b; color: #ffffff; }
+
+    .gallery-item.selected { border-color: #735c00; background-color: #fef3e7; box-shadow: 0 0 0 2px #735c00; }
 
     @media (max-width: 767px) {
       .sidebar { display: none; }
@@ -54,7 +57,7 @@
       <h1 class="text-base font-bold text-slate-800">Djandes Admin</h1>
     </div>
 
-    <!-- Menu Akses Cepat (Desktop & Mobile Responsif) -->
+    <!-- Menu Akses Cepat -->
     <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
       <button onclick="loadDataFromGithubPublic()" class="action-btn bg-blue-50 text-blue-700 hover:bg-blue-100" title="Tarik dari CDN (Tanpa Token)">
         <span class="material-symbols-outlined text-sm">cloud_download</span> <span class="hidden sm:inline">Tarik Cloud</span>
@@ -65,7 +68,6 @@
       
       <div class="h-4 w-[1px] bg-slate-300 mx-0.5"></div>
 
-      <!-- Import/Export -->
       <label class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200">
         <span class="material-symbols-outlined text-sm">upload_file</span> <span class="hidden sm:inline">Impor</span>
         <input type="file" accept=".json" id="importFile" class="hidden" onchange="handleImport(event)" />
@@ -76,7 +78,7 @@
     </div>
   </header>
 
-  <!-- Mobile Secondary Action Bar (Hanya Muncul di Mobile) -->
+  <!-- Mobile Secondary Action Bar -->
   <div class="md:hidden fixed top-16 left-0 w-full bg-white border-b border-slate-200 px-3 py-2 z-40 flex items-center justify-between gap-2">
     <div class="relative flex-1">
       <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
@@ -140,24 +142,57 @@
     </div>
   </div>
 
+  <!-- MODAL MULTI-LEVEL UNTUK MEDIA GALLERY CLOUD -->
+  <div id="galleryModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col p-5 relative mx-2 overflow-hidden">
+      <button onclick="closeGalleryModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <h2 class="text-xl font-bold mb-1 flex items-center gap-2 text-gray-800">
+        <span class="material-symbols-outlined text-[#735c00]">imagesmode</span> Media Library Cloud (img/)
+      </h2>
+      <p class="text-xs text-gray-500 mb-4">Pilih satu atau beberapa gambar dari repository GitHub Anda secara real-time.</p>
+      
+      <!-- Area Grid Foto -->
+      <div id="galleryModalBody" class="overflow-y-auto flex-1 p-1 bg-gray-50 rounded-lg border min-h-[300px]">
+         <!-- Konten Gambar di-render lewat JS -->
+      </div>
+
+      <!-- Footer Modal Galeri -->
+      <div class="flex items-center justify-between mt-4 pt-3 border-t shrink-0">
+         <div class="text-sm font-medium text-gray-700" id="gallerySelectedCount">Terpilih: 0 Gambar</div>
+         <div class="flex gap-2">
+            <button onclick="closeGalleryModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg">Batal</button>
+            <button onclick="applyGallerySelection()" class="px-5 py-2 bg-[#735c00] hover:bg-[#5a4a00] text-white text-sm font-medium rounded-lg">Gunakan Terpilih</button>
+         </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
   // ==================== KONFIGURASI ====================
-  const CONFIG = {
-    user: localStorage.getItem('gh_user') || 'jandess',
-    repo: localStorage.getItem('gh_repo') || 'katalog',
-    branch: localStorage.getItem('gh_branch') || 'main'
-  };
+  function getRepoConfig() {
+    return {
+      user: localStorage.getItem('gh_user') || 'jandess',
+      repo: localStorage.getItem('gh_repo') || 'katalog',
+      branch: localStorage.getItem('gh_branch') || 'main',
+      token: localStorage.getItem('gh_token') || ''
+    };
+  }
 
   let data = { categories: [], packagingTypes: [], packagingVariants: [], products: [], profile: {} };
   let defaultData = JSON.parse(JSON.stringify(data));
   let currentTab = 'products';
   let searchQuery = '';
 
+  // State Sementara untuk Media Library Selection
+  let activeTargetInputId = ''; 
+  let selectedCloudImages = []; 
+
   // ==================== INISIALISASI ====================
   document.addEventListener('DOMContentLoaded', () => {
-    // Bind click events untuk sidebar & bottom nav
     document.querySelectorAll('.sidebar .nav-item').forEach(item => {
       item.addEventListener('click', () => { switchTab(item.dataset.tab, 'desktop'); });
     });
@@ -165,14 +200,13 @@
       item.addEventListener('click', () => { switchTab(item.dataset.tab, 'mobile'); });
     });
     
-    // Muat data awal
+    // Tarik data publik dari CDN (Tanpa Token)
     loadDataFromGithubPublic();
   });
 
   // ==================== NAVIGASI TABS ====================
   function switchTab(tab, platform = 'desktop') {
     currentTab = tab;
-    // Handle UI Aktif Desktop
     if (platform === 'desktop' || platform === 'both') {
       document.querySelectorAll('#mainDesktop .tab-panel').forEach(p => p.classList.add('hidden'));
       document.getElementById(`tab-${tab}`).classList.remove('hidden');
@@ -180,7 +214,6 @@
         b.classList.toggle('active', b.dataset.tab === tab);
       });
     }
-    // Handle UI Aktif Mobile
     if (platform === 'mobile' || platform === 'both') {
       document.querySelectorAll('#mainMobile .tab-panel').forEach(p => p.classList.add('hidden'));
       document.getElementById(`tab-${tab}-mobile`).classList.remove('hidden');
@@ -201,7 +234,7 @@
     }
   }
 
-  // ==================== CLOUD SYNC & IMPORT ====================
+  // ==================== PULL / SINKRONISASI DATA UTAMA (TANPA TOKEN) ====================
   function toggleSpinner(show, text = 'Memuat data...') {
     const ld = document.getElementById('loadingIndicator');
     document.getElementById('loadingText').innerText = text;
@@ -210,16 +243,18 @@
   }
 
   async function loadDataFromGithubPublic() {
+    const conf = getRepoConfig();
     toggleSpinner(true, 'Menarik data dari CDN...');
     try {
-      const cdnUrl = `https://cdn.jsdelivr.net/gh/${CONFIG.user}/${CONFIG.repo}@${CONFIG.branch}/data.json?t=${Date.now()}`;
+      // Fetch dari JSDelivr tanpa butuh authentikasi
+      const cdnUrl = `https://cdn.jsdelivr.net/gh/${conf.user}/${conf.repo}@${conf.branch}/data.json?t=${Date.now()}`;
       const response = await fetch(cdnUrl);
       if(!response.ok) throw new Error("Gagal mengambil data dari CDN");
       
       data = await response.json();
       ensureArrays();
       switchTab(currentTab, 'both');
-      showToast('Berhasil dimuat dari Cloud!');
+      showToast('Data berhasil dimuat!');
     } catch(err) {
       console.warn("Fallback ke file lokal:", err);
       try {
@@ -236,9 +271,10 @@
     }
   }
 
+  // ==================== PUSH DATA (HANYA INI YANG BUTUH TOKEN) ====================
   async function pushDataToGithub() {
-    const token = localStorage.getItem('gh_token');
-    if(!token) {
+    const conf = getRepoConfig();
+    if(!conf.token) {
       showToast("Token GitHub belum diatur! Isi di menu Profil.", "error");
       switchTab('profile', 'both');
       return;
@@ -246,10 +282,10 @@
 
     toggleSpinner(true, 'Menyimpan ke Cloud...');
     try {
-      const url = `https://api.github.com/repos/${CONFIG.user}/${CONFIG.repo}/contents/data.json`;
+      const url = `https://api.github.com/repos/${conf.user}/${conf.repo}/contents/data.json`;
       let sha = "";
-      const getRes = await fetch(`${url}?ref=${CONFIG.branch}`, {
-        headers: { 'Authorization': `token ${token}` }
+      const getRes = await fetch(`${url}?ref=${conf.branch}`, {
+        headers: { 'Authorization': `token ${conf.token}` }
       });
       if(getRes.ok) {
         const fileData = await getRes.json();
@@ -261,8 +297,8 @@
 
       const putRes = await fetch(url, {
         method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Admin update data.json [${new Date().toLocaleString()}]`, content: base64Content, sha: sha, branch: CONFIG.branch })
+        headers: { 'Authorization': `token ${conf.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Admin update data.json [${new Date().toLocaleString()}]`, content: base64Content, sha: sha, branch: conf.branch })
       });
 
       if(putRes.ok) {
@@ -277,6 +313,207 @@
     }
   }
 
+  // ==================== ENGINE MEDIA LIBRARY & UPLOAD ====================
+  
+  // A. UPLOAD LANGSUNG (Butuh Token)
+  async function handleDirectUpload(fileElementId, targetInputId) {
+    const conf = getRepoConfig();
+    const fileCtrl = document.getElementById(fileElementId);
+    if (!fileCtrl.files.length) return;
+    if(!conf.token) { return showToast("Isi GitHub Token di Menu Profil dahulu untuk Upload!", "error"); }
+
+    const file = fileCtrl.files[0];
+    toggleSpinner(true, "Mengunggah gambar ke Cloud...");
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const b64 = e.target.result.split(',')[1];
+        const cleanName = `img_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+        const pathTarget = `img/${cleanName}`;
+        const targetUrl = `https://api.github.com/repos/${conf.user}/${conf.repo}/contents/${pathTarget}`;
+
+        try {
+            let res = await fetch(targetUrl, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${conf.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `Upload ${cleanName}`, content: b64, branch: conf.branch })
+            });
+
+            if(res.ok) {
+                const cdnUrl = `https://cdn.jsdelivr.net/gh/${conf.user}/${conf.repo}@${conf.branch}/${pathTarget}`;
+                const el = document.getElementById(targetInputId);
+                if(el.tagName === 'TEXTAREA') {
+                   el.value += (el.value ? "\n" : "") + cdnUrl;
+                } else {
+                   el.value = cdnUrl;
+                }
+                showToast("Gambar Berhasil Terunggah!");
+            } else {
+                showToast("Upload gagal di sistem GitHub.", "error");
+            }
+        } catch (err) {
+            showToast(err.message, "error");
+        } finally {
+            toggleSpinner(false);
+            fileCtrl.value = "";
+        }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // B. BUKA GALLERY CLOUD (Butuh Token hanya untuk melisting isi folder di GitHub)
+  async function openCloudGallery(targetInputId) {
+    const conf = getRepoConfig();
+    if(!conf.user || !conf.repo || !conf.token) {
+       return showToast("Konfigurasi Token Cloud belum lengkap di menu Profil!", "error");
+    }
+
+    activeTargetInputId = targetInputId;
+    selectedCloudImages = [];
+    
+    const currentVal = document.getElementById(targetInputId).value;
+    if(currentVal) {
+       selectedCloudImages = currentVal.split('\n').map(x => x.trim()).filter(s => s !== '');
+    }
+
+    document.getElementById('galleryModal').classList.remove('hidden');
+    document.getElementById('galleryModalBody').innerHTML = `
+       <div class="flex items-center justify-center py-10">
+          <span class="material-symbols-outlined animate-spin text-3xl text-[#735c00]">sync</span>
+          <span class="ml-2 text-gray-600 text-sm">Memuat file dari repositori...</span>
+       </div>
+    `;
+    updateGallerySelectedCounter();
+
+    try {
+       const url = `https://api.github.com/repos/${conf.user}/${conf.repo}/contents/img?ref=${conf.branch}`;
+       let res = await fetch(url, { 
+           headers: { 
+               'Authorization': `token ${conf.token}`,
+               'Accept': 'application/vnd.github.v3+json'
+           } 
+       });
+       
+       if(!res.ok) throw new Error("Gagal memuat folder img/. Pastikan token benar dan folder ada.");
+
+       let files = await res.json();
+       let allowedExt = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+       let imageFiles = files.filter(f => f.type === 'file' && allowedExt.some(ext => f.name.toLowerCase().endsWith(ext)));
+
+       if(imageFiles.length === 0) {
+          document.getElementById('galleryModalBody').innerHTML = `
+             <div class="text-center py-12 text-gray-400 text-sm">
+                <span class="material-symbols-outlined text-4xl block mb-2">image_not_supported</span>
+                Tidak ada file gambar ditemukan di folder <b>img/</b> repositori Anda.
+             </div>
+          `;
+          return;
+       }
+       renderGalleryGrid(imageFiles, conf);
+
+    } catch (err) {
+       document.getElementById('galleryModalBody').innerHTML = `
+          <div class="text-center py-8 text-red-600 text-sm">
+             <span class="material-symbols-outlined text-3xl block mb-1">warning</span>
+             <b>Error:</b> ${err.message}
+          </div>
+       `;
+    }
+  }
+
+  function renderGalleryGrid(files, conf) {
+     let html = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">`;
+     files.forEach(file => {
+        const cdnUrl = `https://cdn.jsdelivr.net/gh/${conf.user}/${conf.repo}@${conf.branch}/${file.path}`;
+        const isSelected = selectedCloudImages.includes(cdnUrl);
+        
+        html += `
+          <div class="gallery-item bg-white rounded-lg border p-2 flex flex-col relative justify-between transition cursor-pointer select-none group ${isSelected ? 'selected':''}" 
+               id="gal-item-${btoa(file.name).replace(/=/g, '')}" onclick="toggleSelectImage('${cdnUrl}', '${btoa(file.name).replace(/=/g, '')}')">
+             
+             <div class="absolute top-1.5 left-1.5 z-10 bg-white/90 rounded-md border p-0.5 flex items-center justify-center shadow-xs">
+                <input type="checkbox" class="w-3.5 h-3.5 accent-[#735c00] pointer-events-none" id="chk-${btoa(file.name).replace(/=/g, '')}" ${isSelected ? 'checked':''} />
+             </div>
+
+             <div class="w-full aspect-square rounded-md overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-100">
+                <img src="${cdnUrl}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/100?text=Error'" loading="lazy" />
+             </div>
+
+             <div class="mt-2 flex items-center justify-between gap-1">
+                <span class="text-[10px] text-gray-500 truncate flex-1 block font-mono pr-1" title="${file.name}">${file.name}</span>
+                <button onclick="deleteImageFromRepo(event, '${file.path}', '${file.sha}', '${btoa(file.name).replace(/=/g, '')}')" 
+                        class="text-red-500 hover:bg-red-50 p-1 rounded-md shrink-0 md:opacity-0 group-hover:opacity-100 transition" title="Hapus Permanen">
+                   <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+             </div>
+          </div>
+        `;
+     });
+     html += `</div>`;
+     document.getElementById('galleryModalBody').innerHTML = html;
+  }
+
+  function toggleSelectImage(url, secureId) {
+     const chk = document.getElementById(`chk-${secureId}`);
+     const card = document.getElementById(`gal-item-${secureId}`);
+     if (selectedCloudImages.includes(url)) {
+        selectedCloudImages = selectedCloudImages.filter(x => x !== url);
+        if(chk) chk.checked = false;
+        if(card) card.classList.remove('selected');
+     } else {
+        selectedCloudImages.push(url);
+        if(chk) chk.checked = true;
+        if(card) card.classList.add('selected');
+     }
+     updateGallerySelectedCounter();
+  }
+
+  function updateGallerySelectedCounter() {
+     document.getElementById('gallerySelectedCount').innerText = `Terpilih: ${selectedCloudImages.length} Gambar`;
+  }
+
+  function applyGallerySelection() {
+     const targetEl = document.getElementById(activeTargetInputId);
+     if(targetEl) {
+        targetEl.value = selectedCloudImages.join('\n');
+     }
+     closeGalleryModal();
+  }
+
+  async function deleteImageFromRepo(event, path, sha, secureId) {
+     event.stopPropagation();
+     if(!confirm(`PERINGATAN: Hapus permanen file ini dari GitHub?`)) return;
+
+     const conf = getRepoConfig();
+     toggleSpinner(true, "Menghapus dari GitHub...");
+
+     try {
+        const url = `https://api.github.com/repos/${conf.user}/${conf.repo}/contents/${path}`;
+        let res = await fetch(url, {
+           method: 'DELETE',
+           headers: { 'Authorization': `token ${conf.token}`, 'Content-Type': 'application/json' },
+           body: JSON.stringify({ message: `Hapus media via Admin`, sha: sha, branch: conf.branch })
+        });
+
+        if(res.ok) {
+           showToast("File sukses dihapus!");
+           const card = document.getElementById(`gal-item-${secureId}`);
+           if(card) card.remove();
+        } else {
+           throw new Error("Gagal menghapus file.");
+        }
+     } catch (e) {
+        showToast(e.message, "error");
+     } finally {
+        toggleSpinner(false);
+     }
+  }
+
+  function closeGalleryModal() {
+     document.getElementById('galleryModal').classList.add('hidden');
+  }
+
+  // ==================== UTILITAS & IMPOR / EKSPOR ====================
   function handleImport(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -288,7 +525,7 @@
           data = importedData;
           ensureArrays();
           renderCurrentTab();
-          showToast('Data berhasil diimpor! Jangan lupa Simpan Cloud.');
+          showToast('Data berhasil diimpor! Data ini hanya di memori. Jangan lupa Simpan Cloud.');
         } else {
           showToast('Format JSON salah!', 'error');
         }
@@ -308,10 +545,10 @@
   }
 
   function resetData() {
-    if (confirm('Reset semua data (Hanya di layar ini)?')) {
+    if (confirm('Reset semua data (Hanya di layar ini, tidak mengubah yang di Cloud)?')) {
       data = JSON.parse(JSON.stringify(defaultData));
       ensureArrays(); renderCurrentTab();
-      showToast('Data direset.');
+      showToast('Data direset ke kosong.');
     }
   }
 
@@ -320,7 +557,6 @@
     renderCurrentTab();
   }
 
-  // ==================== UTILS & RENDERERS ====================
   function ensureArrays() {
     if (!data.categories) data.categories = [];
     if (!data.packagingTypes) data.packagingTypes = [];
@@ -330,7 +566,7 @@
   }
   function generateId() { return Date.now() + Math.floor(Math.random() * 1000); }
   function showToast(msg, type = 'success') {
-    alert(msg); // Simplified for safety, you can replace with custom toast UI
+    alert(msg); // Placeholder alert sederhana, Anda bisa mengganti dengan div Toast Custom
   }
   function openModal(title, contentHtml) {
     document.getElementById('modalTitle').textContent = title;
@@ -339,7 +575,8 @@
   }
   function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
-  // --- KATEGORI ---
+
+  // ==================== RENDER KATEGORI ====================
   function renderCategories() {
     const html = buildHtml('Kategori', data.categories, (c) => c.name.toLowerCase().includes(searchQuery), 
       (cat, idx) => `
@@ -361,7 +598,7 @@
     return `
       <div class="space-y-3">
         <div><label class="block text-sm font-medium mb-1">Nama Kategori</label><input id="catName" class="w-full box-border border rounded px-3 py-2 text-sm" value="${isEdit ? data.categories[idx].name : ''}" /></div>
-        <button onclick="saveCategory(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm font-medium w-full md:w-auto">Simpan</button>
+        <button onclick="saveCategory(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm font-medium w-full md:w-auto">Simpan (Tanpa Token)</button>
       </div>`;
   }
   function saveCategory(idx) {
@@ -373,7 +610,7 @@
   }
   function deleteCategory(idx) { if (confirm('Hapus?')) { data.categories.splice(idx, 1); renderCategories(); } }
 
-  // --- TIPE KEMASAN ---
+  // ==================== RENDER TIPE KEMASAN ====================
   function renderPackagingTypes() {
     const html = buildHtml('Tipe Kemasan', data.packagingTypes, (pt) => pt.id_tipe.toLowerCase().includes(searchQuery), 
       (pt, idx) => `
@@ -404,11 +641,70 @@
   }
   function deletePackagingType(idx) { if (confirm('Hapus?')) { data.packagingTypes.splice(idx, 1); renderPackagingTypes(); } }
 
-  // --- PRODUK ---
+  // ==================== RENDER VARIAN KEMASAN (DENGAN GALERI) ====================
+  function renderPackagingVariants() {
+    const html = buildHtml('Varian Kemasan', data.packagingVariants, (pv) => pv.name.toLowerCase().includes(searchQuery), 
+      (pv, idx) => `
+        <div class="bg-white p-3 rounded-lg border flex items-center justify-between gap-2 item-card">
+          <div><span class="font-medium">${pv.name}</span><span class="text-xs text-gray-400 ml-2">Tipe: ${pv.id_tipe}</span></div>
+          <div class="flex gap-1">
+            <button onclick="editPackagingVariant(${idx})" class="text-blue-600 hover:bg-blue-50 p-1 rounded"><span class="material-symbols-outlined text-sm">edit</span></button>
+            <button onclick="deletePackagingVariant(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded"><span class="material-symbols-outlined text-sm">delete</span></button>
+          </div>
+        </div>
+      `, 'addPackagingVariant');
+    document.getElementById('tab-packagingVariants').innerHTML = html;
+    document.getElementById('tab-packagingVariants-mobile').innerHTML = html;
+  }
+  function addPackagingVariant() { openModal('Tambah Varian Kemasan', variantForm(null)); }
+  function editPackagingVariant(idx) { openModal('Edit Varian Kemasan', variantForm(idx)); }
+  
+  function variantForm(idx) {
+    const isEdit = idx !== null;
+    const pv = isEdit ? data.packagingVariants[idx] : {};
+    return `
+      <div class="space-y-3">
+        <div><label class="block text-sm font-medium mb-1">ID Varian</label><input id="pvId" class="w-full border rounded px-3 py-2 text-sm" value="${pv.id_varian || ''}" /></div>
+        <div><label class="block text-sm font-medium mb-1">ID Tipe</label><select id="pvType" class="w-full border rounded px-3 py-2 text-sm">${data.packagingTypes.map(pt => `<option value="${pt.id_tipe}" ${pt.id_tipe === pv.id_tipe ? 'selected' : ''}>${pt.id_tipe}</option>`).join('')}</select></div>
+        <div><label class="block text-sm font-medium mb-1">Nama Varian</label><input id="pvName" class="w-full border rounded px-3 py-2 text-sm" value="${pv.name || ''}" /></div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Gambar Varian</label>
+          <div class="flex gap-2 items-start">
+            <textarea id="pvImages" class="flex-1 border rounded px-3 py-2 text-sm font-mono text-xs" rows="3">${(pv.images || [pv.img||'']).join('\\n')}</textarea>
+            <div class="flex flex-col gap-1.5 shrink-0">
+               <button onclick="openCloudGallery('pvImages')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 p-2 rounded flex flex-col items-center justify-center border border-amber-300 text-xs font-semibold w-20"><span class="material-symbols-outlined text-xl">imagesmode</span><span class="mt-0.5 text-[9px]">Gallery Cloud</span></button>
+               <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded flex flex-col items-center justify-center border border-gray-300 text-xs font-medium w-20"><span class="material-symbols-outlined text-xl">cloud_upload</span><span class="mt-0.5 text-[9px]">+ Upload</span><input type="file" id="uploadVarGallery" onchange="handleDirectUpload('uploadVarGallery', 'pvImages')" class="hidden" /></label>
+            </div>
+          </div>
+        </div>
+        <button onclick="savePackagingVariant(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm w-full md:w-auto">Simpan (Lokal)</button>
+      </div>`;
+  }
+
+  function savePackagingVariant(idx) {
+    const id_varian = document.getElementById('pvId').value.trim();
+    const id_tipe = document.getElementById('pvType').value;
+    const name = document.getElementById('pvName').value.trim();
+    const images = document.getElementById('pvImages').value.split('\n').map(x => x.trim()).filter(x => x);
+    if (!id_varian || !name) return alert('ID dan Nama wajib diisi');
+    const obj = { id_varian, id_tipe, name, img: images[0]||'', images, desc: "", features: [] };
+    if (idx !== null) data.packagingVariants[idx] = obj;
+    else data.packagingVariants.push(obj);
+    closeModal(); renderPackagingVariants();
+  }
+  function deletePackagingVariant(idx) { if (confirm('Hapus?')) { data.packagingVariants.splice(idx, 1); renderPackagingVariants(); } }
+
+  // ==================== RENDER PRODUK (LENGKAP DENGAN NEW/PROMO) ====================
   function renderProducts() {
     const html = buildHtml('Produk', data.products, (p) => p.name.toLowerCase().includes(searchQuery), 
       (p, idx) => {
         const imgUrl = p.images && p.images.length ? p.images[0] : (p.img || '');
+        let badges = '';
+        if (p.isOutOfStock) badges += '<span class="filter-badge habis">Habis</span> ';
+        if (p.bestseller) badges += '<span class="filter-badge bestseller">Best Seller</span> ';
+        if (p.isNew) badges += '<span class="filter-badge new">New</span> ';
+        if (p.isPromo) badges += '<span class="filter-badge promo">Promo</span> ';
+        
         return `
         <div class="bg-white p-3 rounded-lg border flex flex-col md:flex-row md:items-center gap-2 item-card">
           <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -416,6 +712,7 @@
             <div class="min-w-0 flex-1">
               <span class="font-medium block truncate">${p.name}</span>
               <div class="text-xs text-gray-500">Rp ${p.price?.toLocaleString('id-ID')} • ${p.cat}</div>
+              <div class="mt-1">${badges}</div>
             </div>
           </div>
           <div class="flex gap-1 justify-end shrink-0">
@@ -430,56 +727,78 @@
 
   function addProduct() { openModal('Tambah Produk', productForm(null)); }
   function editProduct(idx) { openModal('Edit Produk', productForm(idx)); }
+  
   function productForm(idx) {
     const isEdit = idx !== null;
     const p = isEdit ? data.products[idx] : {};
     const catOptions = data.categories.map(c => `<option value="${c.name}" ${p.cat === c.name ? 'selected' : ''}>${c.name}</option>`).join('');
+    
     return `
       <div class="space-y-3">
         <div><label class="block text-sm font-medium mb-1">Nama</label><input id="pName" class="w-full border rounded px-3 py-2 text-sm" value="${p.name || ''}" /></div>
         <div><label class="block text-sm font-medium mb-1">Harga</label><input id="pPrice" type="number" class="w-full border rounded px-3 py-2 text-sm" value="${p.price || ''}" /></div>
         <div><label class="block text-sm font-medium mb-1">Kategori</label><select id="pCat" class="w-full border rounded px-3 py-2 text-sm"><option value="">Pilih</option>${catOptions}</select></div>
-        <div><label class="block text-sm font-medium mb-1">Gambar URL</label><textarea id="pImages" class="w-full border rounded px-3 py-2 text-sm" rows="2">${p.images ? p.images.join('\\n') : (p.img||'')}</textarea></div>
-        <div><label class="block text-sm font-medium mb-1">Deskripsi</label><textarea id="pDesc" class="w-full border rounded px-3 py-2 text-sm" rows="2">${p.desc || ''}</textarea></div>
-        <div class="flex flex-wrap gap-3">
-          <label class="text-sm"><input type="checkbox" id="pOut" ${p.isOutOfStock ? 'checked' : ''} /> Habis</label>
-          <label class="text-sm"><input type="checkbox" id="pBest" ${p.bestseller ? 'checked' : ''} /> Best Seller</label>
+        
+        <div>
+          <label class="block text-sm font-medium mb-1">Gambar URL (Satu per baris)</label>
+          <div class="flex gap-2 items-start">
+            <textarea id="pImages" class="flex-1 border rounded px-3 py-2 text-sm font-mono text-xs" rows="3">${p.images ? p.images.join('\\n') : (p.img||'')}</textarea>
+            <div class="flex flex-col gap-1.5 shrink-0">
+               <button onclick="openCloudGallery('pImages')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 p-2 rounded flex flex-col items-center justify-center border border-amber-300 text-xs font-semibold w-20"><span class="material-symbols-outlined text-xl">imagesmode</span><span class="mt-0.5 text-[9px]">Gallery Cloud</span></button>
+               <label class="cursor-pointer bg-gray-100 hover:bg-gray-200 p-2 rounded flex flex-col items-center justify-center border border-gray-300 text-xs font-medium w-20"><span class="material-symbols-outlined text-xl">cloud_upload</span><span class="mt-0.5 text-[9px]">+ Upload</span><input type="file" id="uploadProdGallery" onchange="handleDirectUpload('uploadProdGallery', 'pImages')" class="hidden" /></label>
+            </div>
+          </div>
         </div>
-        <button onclick="saveProduct(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm w-full md:w-auto">Simpan</button>
+
+        <div><label class="block text-sm font-medium mb-1">Deskripsi</label><textarea id="pDesc" class="w-full border rounded px-3 py-2 text-sm" rows="2">${p.desc || ''}</textarea></div>
+        
+        <!-- Opsi Status Produk Lengkap -->
+        <div class="flex flex-wrap gap-4 py-2 border-t mt-2">
+          <label class="text-sm font-medium flex items-center gap-1"><input type="checkbox" id="pOut" class="accent-[#735c00]" ${p.isOutOfStock ? 'checked' : ''} /> Habis</label>
+          <label class="text-sm font-medium flex items-center gap-1"><input type="checkbox" id="pBest" class="accent-[#735c00]" ${p.bestseller ? 'checked' : ''} /> Best Seller</label>
+          <label class="text-sm font-medium flex items-center gap-1"><input type="checkbox" id="pNew" class="accent-[#735c00]" ${p.isNew ? 'checked' : ''} /> New</label>
+          <label class="text-sm font-medium flex items-center gap-1"><input type="checkbox" id="pPromo" class="accent-[#735c00]" ${p.isPromo ? 'checked' : ''} /> Promo</label>
+        </div>
+        
+        <button onclick="saveProduct(${isEdit ? idx : 'null'})" class="bg-[#735c00] text-white px-4 py-2 rounded text-sm font-bold w-full md:w-auto">Update Data Lokal</button>
       </div>`;
   }
+
   function saveProduct(idx) {
     const name = document.getElementById('pName').value.trim();
     const price = parseInt(document.getElementById('pPrice').value) || 0;
     const cat = document.getElementById('pCat').value;
     const images = document.getElementById('pImages').value.split('\n').map(x => x.trim()).filter(x => x);
     const desc = document.getElementById('pDesc').value.trim();
+    
+    // Tarik nilai seluruh checkbox
+    const isOutOfStock = document.getElementById('pOut').checked;
+    const bestseller = document.getElementById('pBest').checked;
+    const isNew = document.getElementById('pNew').checked;
+    const isPromo = document.getElementById('pPromo').checked;
+
     if (!name) return alert('Nama wajib!');
-    const obj = { id: idx !== null ? data.products[idx].id : generateId(), name, price, cat, img: images[0]||'', images, desc, isOutOfStock: document.getElementById('pOut').checked, bestseller: document.getElementById('pBest').checked };
+    
+    const obj = { 
+      id: idx !== null ? data.products[idx].id : generateId(), 
+      name, price, cat, 
+      img: images[0]||'', images, desc, 
+      isOutOfStock, bestseller, isNew, isPromo 
+    };
+
     if (idx !== null) data.products[idx] = obj;
     else data.products.push(obj);
-    closeModal(); renderProducts();
+    
+    closeModal(); 
+    renderProducts();
+    showToast("Disimpan ke memori sementara. Klik 'Simpan Cloud' jika ingin di-publish.");
   }
+
   function deleteProduct(idx) { if (confirm('Hapus?')) { data.products.splice(idx, 1); renderProducts(); } }
 
-  // --- VARIAN KEMASAN ---
-  function renderPackagingVariants() {
-    const html = buildHtml('Varian Kemasan', data.packagingVariants, (pv) => pv.name.toLowerCase().includes(searchQuery), 
-      (pv, idx) => `
-        <div class="bg-white p-3 rounded-lg border flex items-center justify-between gap-2 item-card">
-          <div><span class="font-medium">${pv.name}</span><span class="text-xs text-gray-400 ml-2">Tipe: ${pv.id_tipe}</span></div>
-          <div class="flex gap-1">
-            <button onclick="deletePackagingVariant(${idx})" class="text-red-600 hover:bg-red-50 p-1 rounded"><span class="material-symbols-outlined text-sm">delete</span></button>
-          </div>
-        </div>
-      `, null);
-    document.getElementById('tab-packagingVariants').innerHTML = html;
-    document.getElementById('tab-packagingVariants-mobile').innerHTML = html;
-  }
-  function deletePackagingVariant(idx) { if (confirm('Hapus?')) { data.packagingVariants.splice(idx, 1); renderPackagingVariants(); } }
-
-  // --- PROFIL ---
+  // ==================== PROFIL TOKO ====================
   function renderProfileDisplay() {
+    const conf = getRepoConfig();
     const p = data.profile || {};
     const html = `
       <div class="flex justify-between items-center mb-4">
@@ -493,12 +812,15 @@
           <div><strong class="text-gray-500">IG:</strong> ${p.instagram || '-'}</div>
           <div><strong class="text-gray-500">Alamat:</strong> ${p.address || '-'}</div>
         </div>
+        
         <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded text-sm">
-          <strong class="block mb-2 text-amber-900">Pengaturan Cloud Storage</strong>
-          <div>User: <input id="setGhUser" value="${CONFIG.user}" class="border rounded px-2 py-1 text-xs w-full mb-2"></div>
-          <div>Repo: <input id="setGhRepo" value="${CONFIG.repo}" class="border rounded px-2 py-1 text-xs w-full mb-2"></div>
-          <div>Token PAT: <input id="setGhToken" type="password" placeholder="ghp_xxxx..." value="${localStorage.getItem('gh_token')||''}" class="border rounded px-2 py-1 text-xs w-full mb-2"></div>
-          <button onclick="saveCloudSettings()" class="bg-amber-700 text-white px-3 py-1 rounded text-xs mt-2">Simpan Cloud Settings</button>
+          <strong class="block mb-2 text-amber-900">Pengaturan Cloud & Token</strong>
+          <p class="text-xs text-amber-800 mb-3 leading-relaxed">Isi token PAT hanya jika Anda ingin menggunakan fitur <b>Simpan ke GitHub</b> atau <b>Upload dan Gallery</b>.</p>
+          <div>Username GitHub: <input id="setGhUser" value="${conf.user}" class="border rounded px-2 py-1.5 text-xs w-full mb-2"></div>
+          <div>Nama Repo: <input id="setGhRepo" value="${conf.repo}" class="border rounded px-2 py-1.5 text-xs w-full mb-2"></div>
+          <div>Branch: <input id="setGhBranch" value="${conf.branch}" class="border rounded px-2 py-1.5 text-xs w-full mb-2"></div>
+          <div>Token (PAT): <input id="setGhToken" type="password" placeholder="ghp_xxxx..." value="${conf.token}" class="border rounded px-2 py-1.5 text-xs w-full mb-2"></div>
+          <button onclick="saveCloudSettings()" class="bg-amber-700 text-white font-bold px-4 py-2 rounded text-xs mt-2 w-full md:w-auto">Simpan Konfigurasi</button>
         </div>
       </div>
     `;
@@ -509,18 +831,19 @@
   function saveCloudSettings() {
     localStorage.setItem('gh_user', document.getElementById('setGhUser').value.trim());
     localStorage.setItem('gh_repo', document.getElementById('setGhRepo').value.trim());
+    localStorage.setItem('gh_branch', document.getElementById('setGhBranch').value.trim());
     localStorage.setItem('gh_token', document.getElementById('setGhToken').value.trim());
     alert("Konfigurasi Cloud tersimpan!");
     location.reload();
   }
 
-  // --- HELPER BIKIN HTML LISTING ---
+  // ==================== HELPER BIKIN HTML LISTING ====================
   function buildHtml(title, arrayData, filterFn, rowRenderer, addFnName) {
     const filtered = arrayData.filter(filterFn);
     let html = `
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-bold">${title} (${filtered.length})</h2>
-        ${addFnName ? `<button onclick="${addFnName}()" class="bg-[#735c00] text-white px-3 py-1.5 rounded text-sm flex items-center gap-1"><span class="material-symbols-outlined text-sm">add</span> Tambah</button>` : ''}
+        ${addFnName ? `<button onclick="${addFnName}()" class="bg-[#735c00] text-white px-3 py-1.5 rounded text-sm flex items-center gap-1 font-bold"><span class="material-symbols-outlined text-sm">add</span> Tambah</button>` : ''}
       </div>
       <div class="space-y-2">`;
     filtered.forEach(item => {
