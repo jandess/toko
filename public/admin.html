@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Djandes Admin Panel - Smart Cloud Edition</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; border-top: 1px solid #e2e8f0; z-index: 50; padding-bottom: env(safe-area-inset-bottom); }
+    .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; font-size: 11px; color: #64748b; transition: all 0.2s; cursor: pointer; flex: 1; }
+    .bottom-nav .nav-item.active { color: #735c00; font-weight: 600; }
+    .sidebar { position: fixed; left: 0; top: 64px; bottom: 0; width: 220px; background: #ffffff; border-right: 1px solid #e2e8f0; overflow-y: auto; z-index: 40; padding: 16px 0; }
+    .sidebar .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #475569; transition: all 0.2s; cursor: pointer; border-left: 3px solid transparent; font-weight: 500; }
+    .sidebar .nav-item:hover { background: #f1f5f9; color: #0f172a; }
+    .sidebar .nav-item.active { background: #fef3c7; color: #735c00; border-left-color: #735c00; font-weight: 700; }
+    
+    .main-content.desktop { margin-left: 220px; padding: 24px; margin-top: 64px; }
+    .main-content.mobile { padding: 12px 12px 90px 12px; margin-top: 110px; }
+    .modal-overlay { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+    
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+    .action-btn:active { transform: scale(0.96); }
+
+    @media (max-width: 767px) {
+      .sidebar { display: none; }
+      .bottom-nav { display: flex !important; }
+      .main-content.desktop { display: none; }
+      .main-content.mobile { display: block; }
+    }
+    @media (min-width: 768px) {
+      .bottom-nav { display: none !important; }
+      .main-content.mobile { display: none; }
+      .main-content.desktop { display: block; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app" class="min-h-screen flex flex-col">
+  <!-- Header Utama -->
+  <header class="bg-white border-b border-slate-200 fixed top-0 left-0 w-full z-50 h-16 px-4 flex items-center justify-between gap-3 shadow-xs">
+    <div class="flex items-center gap-2 shrink-0">
+      <span class="material-symbols-outlined text-2xl text-[#735c00]">storefront</span>
+      <h1 class="text-base font-bold text-slate-800">Djandes Admin</h1>
+    </div>
+
+    <!-- Pilihan Menu Lengkap Akses Cepat (Desktop & Mobile Responsif) -->
+    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+      <button onclick="loadDataFromGithubPublic()" class="action-btn bg-blue-50 text-blue-700 hover:bg-blue-100" title="Tarik dari CDN (Tanpa Token)">
+        <span class="material-symbols-outlined text-sm">cloud_download</span> <span class="hidden sm:inline">Tarik Cloud</span>
+      </button>
+      <button onclick="pushDataToGithub()" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-xs" title="Simpan Menggunakan PAT">
+        <span class="material-symbols-outlined text-sm">cloud_upload</span> <span>Simpan</span>
+      </button>
+      
+      <div class="h-4 w-[1px] bg-slate-300 mx-0.5"></div>
+
+      <!-- Fitur Impor File JSON yang Kini Muncul di Mode Mobile -->
+      <label class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer">
+        <span class="material-symbols-outlined text-sm">upload_file</span> <span class="hidden sm:inline">Impor</span>
+        <input type="file" accept=".json" id="importFile" class="hidden" />
+      </label>
+      <button onclick="exportData()" class="action-btn bg-slate-100 text-slate-700 hover:bg-slate-200">
+        <span class="material-symbols-outlined text-sm">download</span> <span class="hidden sm:inline">Ekspor</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Secondary Action Bar (Akses Mudah Menu di Layar Kecil) -->
+  <div class="md:hidden fixed top-16 left-0 w-full bg-white border-b border-slate-200 px-3 py-2 z-40 flex items-center justify-between gap-2">
+    <div class="relative flex-1">
+      <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+      <input type="text" placeholder="Cari data..." oninput="handleGlobalSearch(this.value)" class="w-full pl-8 pr-3 py-1.5 bg-slate-100 rounded-lg text-xs border-0 focus:ring-1 focus:ring-[#735c00] outline-none" />
+    </div>
+    <button onclick="resetData()" class="action-btn bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs shrink-0">
+      <span class="material-symbols-outlined text-sm">refresh</span> Reset
+    </button>
+  </div>
+
+  <!-- Sidebar Navigasi Desktop -->
+  <aside class="sidebar">
+    <div class="nav-item active" data-tab="products"><span class="material-symbols-outlined">inventory_2</span><span>Produk</span></div>
+    <div class="nav-item" data-tab="categories"><span class="material-symbols-outlined">category</span><span>Kategori</span></div>
+    <div class="nav-item" data-tab="packagingTypes"><span class="material-symbols-outlined">box</span><span>Kemasan</span></div>
+    <div class="nav-item" data-tab="packagingVariants"><span class="material-symbols-outlined">style</span><span>Varian</span></div>
+    <div class="nav-item" data-tab="profile"><span class="material-symbols-outlined">person</span><span>Profil Toko</span></div>
+  </aside>
+
+  <!-- Konten Utama Desktop -->
+  <main class="main-content desktop" id="mainDesktop">
+    <div id="tab-products" class="tab-panel"></div>
+    <div id="tab-categories" class="tab-panel hidden"></div>
+    <div id="tab-packagingTypes" class="tab-panel hidden"></div>
+    <div id="tab-packagingVariants" class="tab-panel hidden"></div>
+    <div id="tab-profile" class="tab-panel hidden"></div>
+  </main>
+
+  <!-- Konten Utama Mobile -->
+  <main class="main-content mobile" id="mainMobile">
+    <div id="tab-products-mobile" class="tab-panel"></div>
+    <div id="tab-categories-mobile" class="tab-panel hidden"></div>
+    <div id="tab-packagingTypes-mobile" class="tab-panel hidden"></div>
+    <div id="tab-packagingVariants-mobile" class="tab-panel hidden"></div>
+    <div id="tab-profile-mobile" class="tab-panel hidden"></div>
+  </main>
+
+  <!-- Bottom Navigation Mobile -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-tab="products"><span class="material-symbols-outlined">inventory_2</span><span>Produk</span></div>
+    <div class="nav-item" data-tab="categories"><span class="material-symbols-outlined">category</span><span>Kategori</span></div>
+    <div class="nav-item" data-tab="packagingTypes"><span class="material-symbols-outlined">box</span><span>Kemasan</span></div>
+    <div class="nav-item" data-tab="packagingVariants"><span class="material-symbols-outlined">style</span><span>Varian</span></div>
+    <div class="nav-item" data-tab="profile"><span class="material-symbols-outlined">person</span><span>Profil</span></div>
+  </nav>
+</div>
+
+<script>
+  // Konfigurasi Repository
+  const CONFIG = {
+    user: 'jandess',
+    repo: 'katalog',
+    branch: 'main'
+  };
+
+  let data = { categories: [], packagingTypes: [], packagingVariants: [], products: [], profile: {} };
+
+  // A. Tarik data publik otomatis tanpa butuh Token PAT
+  async function loadDataFromGithubPublic() {
+    try {
+      // Menggunakan CDN jsDelivr untuk auto-pull cepat tanpa menguras rate-limit
+      const cdnUrl = `https://cdn.jsdelivr.net/gh/${CONFIG.user}/${CONFIG.repo}@${CONFIG.branch}/data.json?t=${Date.now()}`;
+      const response = await fetch(cdnUrl);
+      if(!response.ok) throw new Error("Gagal mengambil data dari CDN CDN");
+      
+      data = await response.json();
+      renderCurrentTab();
+      console.log("Data publik berhasil diperbarui otomatis tanpa Token PAT.");
+    } catch(err) {
+      console.warn("Fallback ke file lokal:", err);
+      fetch('/data.json').then(res => res.json()).then(d => { data = d; renderCurrentTab(); });
+    }
+  }
+
+  // B. Hanya gunakan token PAT ketika melakukan aksi SIMPAN / PUSH
+  async function pushDataToGithub() {
+    const token = localStorage.getItem('gh_token');
+    if(!token) {
+      alert("Aksi ini membutuhkan Personal Access Token (PAT). Silakan isi token di menu Profil terlebih dahulu!");
+      switchTab('profile');
+      return;
+    }
+
+    try {
+      const url = `https://api.github.com/repos/${CONFIG.user}/${CONFIG.repo}/contents/data.json`;
+      
+      // Get SHA file terkini
+      let sha = "";
+      const getRes = await fetch(`${url}?ref=${CONFIG.branch}`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if(getRes.ok) {
+        const fileData = await getRes.json();
+        sha = fileData.sha;
+      }
+
+      // Encode content ke base64
+      const jsonStr = JSON.stringify(data, null, 2);
+      const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+      const putRes = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: `Admin update data.json [${new Date().toLocaleString()}]`,
+          content: base64Content,
+          sha: sha,
+          branch: CONFIG.branch
+        })
+      });
+
+      if(putRes.ok) {
+        alert("Berhasil menyimpan data ke Cloud!");
+      } else {
+        throw new Error("Gagal menyimpan. Periksa izin Personal Access Token Anda.");
+      }
+    } catch(err) {
+      alert(err.message);
+    }
+  }
+
+  // Inisialisasi awal saat dokumen siap
+  document.addEventListener('DOMContentLoaded', () => {
+    loadDataFromGithubPublic();
+  });
+</script>
+</body>
+</html>
