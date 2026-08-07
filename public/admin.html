@@ -26,7 +26,7 @@
     .main-content.mobile { padding: 16px 16px 100px 16px; margin-top: 120px; }
     .modal-overlay { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); }
     
-    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; transition: all 0.2s; cursor: pointer; }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 7px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; transition: all 0.2s; cursor: pointer; shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .action-btn:active { transform: scale(0.95); }
 
     .item-card { background: #ffffff; border-radius: 20px; border: 1px solid #f1f5f9; transition: all 0.3s; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
@@ -94,7 +94,10 @@
   <div class="md:hidden fixed top-[72px] left-0 w-full bg-white/90 backdrop-blur-lg border-b border-slate-100 px-4 py-3 z-40 flex items-center justify-between gap-3">
     <div class="relative flex-1">
       <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
-      <input type="text" placeholder="Cari data..." oninput="handleGlobalSearch(this.value)" class="w-full pl-10 pr-4 py-2 bg-slate-100/90 rounded-2xl text-xs border-0 focus:ring-2 focus:ring-amber-400 outline-none transition-all" />
+      <input type="text" id="searchInput" placeholder="Cari data..." oninput="handleGlobalSearch(this.value)" class="w-full pl-10 pr-10 py-2 bg-slate-100/90 rounded-2xl text-xs border-0 focus:ring-2 focus:ring-amber-400 outline-none transition-all" />
+      <button id="clearSearchBtn" onclick="clearSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors hidden">
+        <span class="material-symbols-outlined text-[18px]">close</span>
+      </button>
     </div>
     <button onclick="resetData()" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 active:scale-95 transition-all" title="Bersihkan Layar">
       <span class="material-symbols-outlined text-[18px]">refresh</span>
@@ -206,21 +209,30 @@
       item.addEventListener('click', () => { switchTab(item.dataset.tab, 'mobile'); });
     });
     
-    // MURNI LOKAL / FALLBACK: Tidak ada tarikan otomatis ke cloud saat web dibuka/di-reload!
-    loadDataLocallyOnly();
+    // MUAT DATA LOKAL (TIDAK OTOMATIS DARI CLOUD)
+    loadLocalData();
   });
 
-  async function loadDataLocallyOnly() {
-    try {
-      const localRes = await fetch('/data.json');
-      data = await localRes.json();
-      ensureArrays();
-      switchTab(currentTab, 'both');
-    } catch(e) {
-      // Jika file data.json lokal kosong/tidak ada, pakai default kosong yang aman
-      ensureArrays();
+  function loadLocalData() {
+    const saved = localStorage.getItem('localData');
+    if (saved) {
+      try {
+        data = JSON.parse(saved);
+        ensureArrays();
+        switchTab(currentTab, 'both');
+        showToast('Data dimuat dari penyimpanan lokal.');
+      } catch (e) {
+        data = JSON.parse(JSON.stringify(defaultData));
+        switchTab(currentTab, 'both');
+      }
+    } else {
+      data = JSON.parse(JSON.stringify(defaultData));
       switchTab(currentTab, 'both');
     }
+  }
+
+  function saveLocalData() {
+    localStorage.setItem('localData', JSON.stringify(data));
   }
 
   function switchTab(tab, platform = 'desktop') {
@@ -272,8 +284,9 @@
     }, 3000);
   }
 
-  // Tarik Data (HANYA BERJALAN JIKA TOMBOL "TARIK" DIKLIK MANUAL)
+  // TARIK DATA DARI CLOUD (HANYA SAAT TOMBOL DIKLIK)
   async function loadDataFromGithubPublic(isManual = false) {
+    if(!isManual) return;
     const conf = getRepoConfig();
     toggleSpinner(true, 'Menarik data Cloud...');
     try {
@@ -283,10 +296,11 @@
       
       data = await response.json();
       ensureArrays();
+      saveLocalData();
       switchTab(currentTab, 'both');
-      if(isManual) showToast('Berhasil menarik data terbaru dari Cloud!');
+      showToast('Berhasil menarik data terbaru dari Cloud!');
     } catch(err) {
-      if(isManual) showToast('Gagal menarik data dari Cloud!', 'error');
+      showToast('Gagal menarik data dari Cloud!', 'error');
     } finally {
       toggleSpinner(false);
     }
@@ -481,7 +495,9 @@
         const importedData = JSON.parse(e.target.result);
         if (importedData.products) {
           data = importedData;
-          ensureArrays(); renderCurrentTab();
+          ensureArrays();
+          saveLocalData();
+          renderCurrentTab();
           showToast('Data berhasil diimpor (Lokal)!');
         } else showToast('Format JSON salah!', 'error');
       } catch (err) { showToast('Gagal membaca JSON', 'error'); }
@@ -500,14 +516,31 @@
   }
 
   function resetData() {
-    if (confirm('Bersihkan layar? (Data lokal di browser akan direset)')) {
+    if (confirm('Bersihkan layar? (Data Cloud aman)')) {
       data = JSON.parse(JSON.stringify(defaultData));
-      ensureArrays(); renderCurrentTab();
+      ensureArrays();
+      saveLocalData();
+      renderCurrentTab();
       showToast('Layar dibersihkan.');
     }
   }
 
-  function handleGlobalSearch(val) { searchQuery = val.toLowerCase().trim(); renderCurrentTab(); }
+  function handleGlobalSearch(val) {
+    searchQuery = val.toLowerCase().trim();
+    renderCurrentTab();
+    const clearBtn = document.getElementById('clearSearchBtn');
+    if (val.length > 0) clearBtn.classList.remove('hidden');
+    else clearBtn.classList.add('hidden');
+  }
+
+  function clearSearch() {
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    searchQuery = '';
+    renderCurrentTab();
+    document.getElementById('clearSearchBtn').classList.add('hidden');
+  }
+
   function ensureArrays() {
     if (!data.categories) data.categories = [];
     if (!data.packagingTypes) data.packagingTypes = [];
@@ -553,9 +586,12 @@
     if (!name) return showToast('Nama wajib diisi', 'error');
     if (idx !== null) data.categories[idx].name = name;
     else data.categories.push({ id: 'CAT' + generateId(), name });
-    closeModal(); renderCategories(); showToast('Tersimpan di memori Lokal!');
+    closeModal();
+    renderCategories();
+    saveLocalData();
+    showToast('Tersimpan di memori Lokal!');
   }
-  function deleteCategory(idx) { if (confirm('Hapus?')) { data.categories.splice(idx, 1); renderCategories(); } }
+  function deleteCategory(idx) { if (confirm('Hapus?')) { data.categories.splice(idx, 1); saveLocalData(); renderCategories(); } }
 
   // Tipe Kemasan
   function renderPackagingTypes() {
@@ -584,9 +620,12 @@
     const harga_tambahan = parseInt(document.getElementById('ptPrice').value) || 0;
     if (!id_tipe) return showToast('ID Tipe wajib diisi!', 'error');
     data.packagingTypes.push({ id_tipe, harga_tambahan });
-    closeModal(); renderPackagingTypes(); showToast('Tersimpan di memori Lokal!');
+    closeModal();
+    renderPackagingTypes();
+    saveLocalData();
+    showToast('Tersimpan di memori Lokal!');
   }
-  function deletePackagingType(idx) { if (confirm('Hapus?')) { data.packagingTypes.splice(idx, 1); renderPackagingTypes(); } }
+  function deletePackagingType(idx) { if (confirm('Hapus?')) { data.packagingTypes.splice(idx, 1); saveLocalData(); renderPackagingTypes(); } }
 
   // Varian Kemasan
   function renderPackagingVariants() {
@@ -644,9 +683,12 @@
     const obj = { id_varian, id_tipe, name, img: images[0]||'', images, desc: "", features: [] };
     if (idx !== null) data.packagingVariants[idx] = obj;
     else data.packagingVariants.push(obj);
-    closeModal(); renderPackagingVariants(); showToast('Tersimpan di memori Lokal!');
+    closeModal();
+    renderPackagingVariants();
+    saveLocalData();
+    showToast('Tersimpan di memori Lokal!');
   }
-  function deletePackagingVariant(idx) { if (confirm('Hapus?')) { data.packagingVariants.splice(idx, 1); renderPackagingVariants(); } }
+  function deletePackagingVariant(idx) { if (confirm('Hapus?')) { data.packagingVariants.splice(idx, 1); saveLocalData(); renderPackagingVariants(); } }
 
   // Produk
   function renderProducts() {
@@ -744,11 +786,14 @@
 
     if (idx !== null) data.products[idx] = obj;
     else data.products.push(obj);
-    closeModal(); renderProducts(); showToast("Disimpan ke memori lokal. Klik Upload Cloud untuk Publish!");
+    closeModal();
+    renderProducts();
+    saveLocalData();
+    showToast("Disimpan ke memori lokal. Klik Upload Cloud untuk Publish!");
   }
-  function deleteProduct(idx) { if (confirm('Hapus produk ini?')) { data.products.splice(idx, 1); renderProducts(); } }
+  function deleteProduct(idx) { if (confirm('Hapus produk ini?')) { data.products.splice(idx, 1); saveLocalData(); renderProducts(); } }
 
-  // Profil Lengkap
+  // Profil Lengkap dengan Perbaikan Kolom URL Logo
   function renderProfileDisplay() {
     const conf = getRepoConfig();
     const p = data.profile || {};
@@ -869,6 +914,7 @@
     };
     closeModal();
     renderProfileDisplay();
+    saveLocalData();
     showToast('Profil tersimpan di memori Lokal!');
   }
 
