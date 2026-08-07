@@ -1483,11 +1483,11 @@ function renderInvoice() {
   const statusRaw = (checkoutData.status || 'Pending').toUpperCase();
   let statusBadge = '';
   if (statusRaw.startsWith('LUNAS')) {
-    statusBadge = `<span class="inline-block px-2.5 py-0.5 text-[9px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-250 uppercase mb-1">Lunas</span>`;
+    statusBadge = `<span class="inline-block text-center text-[9px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase mb-1" style="height: 18px; line-height: 16px; vertical-align: middle; padding: 0 10px;">Lunas</span>`;
   } else if (statusRaw.startsWith('DP')) {
-    statusBadge = `<span class="inline-block px-2.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-250 uppercase mb-1">Kurang Bayar</span>`;
+    statusBadge = `<span class="inline-block text-center text-[9px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase mb-1" style="height: 18px; line-height: 16px; vertical-align: middle; padding: 0 10px;">Kurang Bayar</span>`;
   } else {
-    statusBadge = `<span class="inline-block px-2.5 py-0.5 text-[9px] font-bold rounded-full bg-red-50 text-red-700 border border-red-250 uppercase mb-1">Pending</span>`;
+    statusBadge = `<span class="inline-block text-center text-[9px] font-bold rounded-full bg-red-50 text-red-700 border border-red-200 uppercase mb-1" style="height: 18px; line-height: 16px; vertical-align: middle; padding: 0 10px;">Pending</span>`;
   }
 
   container.innerHTML = `
