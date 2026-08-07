@@ -1483,11 +1483,11 @@ function renderInvoice() {
   const statusRaw = (checkoutData.status || 'Pending').toUpperCase();
   let statusBadge = '';
   if (statusRaw.startsWith('LUNAS')) {
-    statusBadge = `<span class="inline-block text-center text-[9px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase mb-1" style="height: 18px; line-height: 16px; vertical-align: middle; padding: 0 10px;">Lunas</span>`;
+    statusBadge = `<div class="inline-block text-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 mb-1" style="padding: 3px 10px; display: inline-block; vertical-align: middle;"><span style="display: block; font-size: 9px; font-weight: bold; line-height: 10px; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;">Lunas</span></div>`;
   } else if (statusRaw.startsWith('DP')) {
-    statusBadge = `<span class="inline-block text-center text-[9px] font-bold rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase mb-1" style="height: 18px; line-height: 16px; vertical-align: middle; padding: 0 10px;">Kurang Bayar</span>`;
+    statusBadge = `<div class="inline-block text-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 mb-1" style="padding: 3px 10px; display: inline-block; vertical-align: middle;"><span style="display: block; font-size: 9px; font-weight: bold; line-height: 10px; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;">Kurang Bayar</span></div>`;
   } else {
-    statusBadge = `<span class="inline-block text-center text-[9px] font-bold rounded-full bg-red-50 text-red-700 border border-red-200 uppercase mb-1" style="height: 18px; line-height: 16px; vertical-align: middle; padding: 0 10px;">Pending</span>`;
+    statusBadge = `<div class="inline-block text-center rounded-full bg-red-50 text-red-700 border border-red-200 mb-1" style="padding: 3px 10px; display: inline-block; vertical-align: middle;"><span style="display: block; font-size: 9px; font-weight: bold; line-height: 10px; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;">Pending</span></div>`;
   }
 
   container.innerHTML = `
