@@ -900,13 +900,30 @@
   }
 
   function saveCloudSettings() {
-    localStorage.setItem('gh_user', document.getElementById('setGhUser').value.trim());
-    localStorage.setItem('gh_repo', document.getElementById('setGhRepo').value.trim());
-    localStorage.setItem('gh_branch', document.getElementById('setGhBranch').value.trim());
-    localStorage.setItem('gh_token', document.getElementById('setGhToken').value.trim());
-    alert("Konfigurasi Cloud & Token tersimpan! Laman akan dimuat ulang.");
-    location.reload();
+  // Ambil nilai dan trim (hapus spasi di awal/akhir)
+  const ghUser = document.getElementById('setGhUser').value.trim();
+  const ghRepo = document.getElementById('setGhRepo').value.trim();
+  const ghBranch = document.getElementById('setGhBranch').value.trim();
+  const ghToken = document.getElementById('setGhToken').value.trim();
+  
+  // Validasi: token jangan kosong
+  if (!ghToken) {
+    alert("Token PAT wajib diisi! Token diperlukan untuk upload gambar dan data ke cloud.");
+    return;
   }
+  
+  // Simpan ke localStorage
+  localStorage.setItem('gh_user', ghUser);
+  localStorage.setItem('gh_repo', ghRepo);
+  localStorage.setItem('gh_branch', ghBranch);
+  localStorage.setItem('gh_token', ghToken);
+  
+  // Notifikasi dan reload (diberi jeda 500ms agar data tersimpan sempurna)
+  alert("Konfigurasi Cloud & Token tersimpan! Laman akan dimuat ulang.");
+  setTimeout(() => {
+    location.reload();
+  }, 500);
+}
 
   function buildHtml(title, arrayData, filterFn, rowRenderer, addFnName) {
     const filtered = arrayData.filter(filterFn);
