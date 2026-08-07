@@ -59,38 +59,27 @@
 <body>
 
 <div id="app" class="min-h-screen flex flex-col">
-  <!-- Header Glassmorphism dengan Tombol Warna Berbeda -->
   <header class="bg-white/90 backdrop-blur-lg border-b border-slate-100 fixed top-0 left-0 w-full z-50 h-[72px] px-5 flex items-center justify-between gap-2 shadow-xs">
     <div class="flex items-center gap-2">
        <span class="material-symbols-outlined text-amber-600 text-2xl">admin_panel_settings</span>
     </div>
-
-    <!-- Tombol Simpel dengan Warna Berbeda -->
     <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-      <!-- Tarik: Biru -->
       <button onclick="loadDataFromGithubPublic()" class="action-btn bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200">
         <span class="material-symbols-outlined text-[16px]">cloud_download</span> Tarik
       </button>
-
-      <!-- Impor: Ungu/Indigo -->
       <label class="action-btn bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 cursor-pointer">
         <span class="material-symbols-outlined text-[16px]">upload_file</span> Impor
         <input type="file" accept=".json" id="importFile" class="hidden" onchange="handleImport(event)" />
       </label>
-
-      <!-- Ekspor: Kuning/Amber -->
       <button onclick="exportData()" class="action-btn bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200">
         <span class="material-symbols-outlined text-[16px]">download</span> Ekspor
       </button>
-      
-      <!-- Upload Cloud: Hijau -->
       <button onclick="pushDataToGithub()" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm">
         <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload
       </button>
     </div>
   </header>
 
-  <!-- Mobile Search Bar -->
   <div class="md:hidden fixed top-[72px] left-0 w-full bg-white/90 backdrop-blur-lg border-b border-slate-100 px-4 py-3 z-40 flex items-center justify-between gap-3">
     <div class="relative flex-1">
       <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
@@ -104,7 +93,6 @@
     </button>
   </div>
 
-  <!-- Sidebar Navigasi Desktop -->
   <aside class="sidebar">
     <div class="nav-item active" data-tab="products"><span class="material-symbols-outlined">inventory_2</span><span>Daftar Produk</span></div>
     <div class="nav-item" data-tab="categories"><span class="material-symbols-outlined">category</span><span>Kategori</span></div>
@@ -113,13 +101,11 @@
     <div class="nav-item" data-tab="profile"><span class="material-symbols-outlined">storefront</span><span>Profil Toko</span></div>
   </aside>
 
-  <!-- Loading Indicator -->
   <div id="loadingIndicator" class="fixed top-[135px] md:top-24 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-5 py-2.5 rounded-full shadow-xl shadow-slate-800/20 z-[9999] flex items-center gap-3 hidden transition-all">
     <span class="material-symbols-outlined animate-spin text-[20px] text-amber-400">sync</span>
     <span class="text-sm font-semibold tracking-wide" id="loadingText">Sinkronisasi...</span>
   </div>
 
-  <!-- Konten Utama -->
   <main class="main-content desktop" id="mainDesktop">
     <div id="tab-products" class="tab-panel"></div>
     <div id="tab-categories" class="tab-panel hidden"></div>
@@ -136,7 +122,6 @@
     <div id="tab-profile-mobile" class="tab-panel hidden"></div>
   </main>
 
-  <!-- Bottom Navigation Mobile -->
   <nav class="bottom-nav" id="bottomNav">
     <div class="nav-item active" data-tab="products"><span class="material-symbols-outlined">inventory_2</span><span>Produk</span></div>
     <div class="nav-item" data-tab="categories"><span class="material-symbols-outlined">category</span><span>Kategori</span></div>
@@ -145,7 +130,6 @@
     <div class="nav-item" data-tab="profile"><span class="material-symbols-outlined">storefront</span><span>Profil</span></div>
   </nav>
 
-  <!-- MODAL UTAMA -->
   <div id="modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden modal-overlay p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col relative overflow-hidden">
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
@@ -158,7 +142,6 @@
     </div>
   </div>
 
-  <!-- MODAL GALLERY CLOUD -->
   <div id="galleryModal" class="fixed inset-0 z-[70] flex items-center justify-center hidden modal-overlay p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative overflow-hidden">
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
@@ -172,16 +155,13 @@
           <span class="material-symbols-outlined text-[18px]">close</span>
         </button>
       </div>
-      
       <div id="galleryModalBody" class="overflow-y-auto flex-1 p-4 bg-slate-50/50 min-h-[300px]"></div>
-
       <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-white">
          <div class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg" id="gallerySelectedCount">Terpilih: 0</div>
          <button onclick="applyGallerySelection()" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-sm font-bold rounded-xl shadow-md shadow-amber-500/20">Gunakan Terpilih</button>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -208,8 +188,6 @@
     document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
       item.addEventListener('click', () => { switchTab(item.dataset.tab, 'mobile'); });
     });
-    
-    // MUAT DATA LOKAL (TIDAK OTOMATIS DARI CLOUD)
     loadLocalData();
   });
 
@@ -284,14 +262,19 @@
     }, 3000);
   }
 
-  // TARIK DATA DARI CLOUD (HANYA SAAT TOMBOL DIKLIK)
+  // ===== PERBAIKAN UTAMA: FUNGSI TARIK =====
   async function loadDataFromGithubPublic() {
     const conf = getRepoConfig();
     toggleSpinner(true, 'Menarik data Cloud...');
+    
     try {
-      const cdnUrl = `https://cdn.jsdelivr.net/gh/${conf.user}/${conf.repo}@${conf.branch}/data.json?t=${Date.now()}`;
-      const response = await fetch(cdnUrl);
-      if(!response.ok) throw new Error("CDN Error");
+      // Gunakan raw.githubusercontent.com (lebih stabil untuk repo publik)
+      const rawUrl = `https://raw.githubusercontent.com/${conf.user}/${conf.repo}/${conf.branch}/data.json?t=${Date.now()}`;
+      const response = await fetch(rawUrl);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} - File data.json tidak ditemukan di repo`);
+      }
       
       data = await response.json();
       ensureArrays();
@@ -299,11 +282,13 @@
       switchTab(currentTab, 'both');
       showToast('Berhasil menarik data terbaru dari Cloud!');
     } catch(err) {
-      showToast('Gagal menarik data dari Cloud! Pastikan repo dan branch benar.', 'error');
+      console.error('Gagal tarik data:', err);
+      showToast('Gagal menarik data dari Cloud! Pastikan file data.json ada di repo dan branch benar.', 'error');
     } finally {
       toggleSpinner(false);
     }
   }
+  // ==========================================
 
   async function pushDataToGithub() {
     const conf = getRepoConfig();
@@ -312,7 +297,6 @@
       switchTab('profile', 'both');
       return;
     }
-
     if(!confirm("Kirim data lokal saat ini ke GitHub Cloud publik?")) return;
 
     toggleSpinner(true, 'Upload ke Cloud...');
@@ -792,7 +776,7 @@
   }
   function deleteProduct(idx) { if (confirm('Hapus produk ini?')) { data.products.splice(idx, 1); saveLocalData(); renderProducts(); } }
 
-  // Profil Lengkap dengan Perbaikan Kolom URL Logo
+  // Profil
   function renderProfileDisplay() {
     const conf = getRepoConfig();
     const p = data.profile || {};
@@ -824,13 +808,11 @@
                 <div class="text-slate-400 font-medium text-xs uppercase tracking-widest mb-1">WhatsApp</div>
                 <div class="font-semibold text-slate-700 text-[15px]">${p.whatsapp ? `+${p.whatsapp}` : '-'}</div>
              </div>
-             
              <div class="grid grid-cols-3 gap-3">
                 <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center"><div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Instagram</div><div class="font-semibold text-slate-700 text-xs truncate">@${p.instagram || '-'}</div></div>
                 <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center"><div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">TikTok</div><div class="font-semibold text-slate-700 text-xs truncate">@${p.tiktok || '-'}</div></div>
                 <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center"><div class="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Facebook</div><div class="font-semibold text-slate-700 text-xs truncate">${p.facebook || '-'}</div></div>
              </div>
-
              <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div class="text-slate-400 font-medium text-xs uppercase tracking-widest mb-1">Alamat Lengkap</div>
                 <div class="font-medium text-slate-700 text-sm leading-relaxed">${p.address || '-'}</div>
