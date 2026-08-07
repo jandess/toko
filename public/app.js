@@ -1483,11 +1483,11 @@ function renderInvoice() {
   const statusRaw = (checkoutData.status || 'Pending').toUpperCase();
   let statusBadge = '';
   if (statusRaw.startsWith('LUNAS')) {
-    statusBadge = `<div class="inline-block text-center rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 mb-1" style="padding: 3px 10px; display: inline-block; vertical-align: middle;"><span style="display: block; font-size: 9px; font-weight: bold; line-height: 10px; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;">Lunas</span></div>`;
+    statusBadge = `<div class="flex justify-end mb-1"><span class="status-badge status-lunas">Lunas</span></div>`;
   } else if (statusRaw.startsWith('DP')) {
-    statusBadge = `<div class="inline-block text-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 mb-1" style="padding: 3px 10px; display: inline-block; vertical-align: middle;"><span style="display: block; font-size: 9px; font-weight: bold; line-height: 10px; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;">Kurang Bayar</span></div>`;
+    statusBadge = `<div class="flex justify-end mb-1"><span class="status-badge status-dp">Kurang Bayar</span></div>`;
   } else {
-    statusBadge = `<div class="inline-block text-center rounded-full bg-red-50 text-red-700 border border-red-200 mb-1" style="padding: 3px 10px; display: inline-block; vertical-align: middle;"><span style="display: block; font-size: 9px; font-weight: bold; line-height: 10px; font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;">Pending</span></div>`;
+    statusBadge = `<div class="flex justify-end mb-1"><span class="status-badge status-pending">Pending</span></div>`;
   }
 
   container.innerHTML = `
@@ -1566,6 +1566,7 @@ async function saveAsImage() {
   const invoice = document.getElementById('invoice-content');
   try {
     showToast("Menyiapkan Gambar...");
+    await document.fonts.ready;
     const canvas = await html2canvas(invoice, { scale: 2, backgroundColor: "#ffffff", logging: false, useCORS: true });
     const link = document.createElement('a');
     link.download = `Invoice-${checkoutData.invoiceId}.png`;
@@ -1581,6 +1582,7 @@ async function shareInvoiceImage() {
   const invoice = document.getElementById('invoice-content');
   try {
     showToast("Menyiapkan Share...");
+    await document.fonts.ready;
     const canvas = await html2canvas(invoice, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
     const dataUrl = canvas.toDataURL('image/png');
     const blob = await (await fetch(dataUrl)).blob();
