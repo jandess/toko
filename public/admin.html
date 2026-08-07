@@ -68,7 +68,7 @@
     <!-- Tombol Simpel dengan Warna Berbeda -->
     <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
       <!-- Tarik: Biru -->
-      <button onclick="loadDataFromGithubPublic(true)" class="action-btn bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200">
+      <button onclick="loadDataFromGithubPublic()" class="action-btn bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200">
         <span class="material-symbols-outlined text-[16px]">cloud_download</span> Tarik
       </button>
 
@@ -285,8 +285,7 @@
   }
 
   // TARIK DATA DARI CLOUD (HANYA SAAT TOMBOL DIKLIK)
-  async function loadDataFromGithubPublic(isManual = false) {
-    if(!isManual) return;
+  async function loadDataFromGithubPublic() {
     const conf = getRepoConfig();
     toggleSpinner(true, 'Menarik data Cloud...');
     try {
@@ -300,7 +299,7 @@
       switchTab(currentTab, 'both');
       showToast('Berhasil menarik data terbaru dari Cloud!');
     } catch(err) {
-      showToast('Gagal menarik data dari Cloud!', 'error');
+      showToast('Gagal menarik data dari Cloud! Pastikan repo dan branch benar.', 'error');
     } finally {
       toggleSpinner(false);
     }
