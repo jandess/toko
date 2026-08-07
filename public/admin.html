@@ -168,7 +168,7 @@
   function getRepoConfig() {
     return {
       user: localStorage.getItem('gh_user') || 'jandess',
-      repo: localStorage.getItem('gh_repo') || 'katalog',
+      repo: localStorage.getItem('gh_repo') || 'toko',
       branch: localStorage.getItem('gh_branch') || 'main',
       token: localStorage.getItem('gh_token') || ''
     };
@@ -269,7 +269,7 @@
     
     try {
       // Gunakan raw.githubusercontent.com (lebih stabil untuk repo publik)
-      const rawUrl = `https://raw.githubusercontent.com/${conf.user}/${conf.repo}/${conf.branch}/data.json?t=${Date.now()}`;
+      const rawUrl = `https://raw.githubusercontent.com/${conf.user}/${conf.repo}/${conf.branch}/public/data.json?t=${Date.now()}`;
       const response = await fetch(rawUrl);
       
       if (!response.ok) {
