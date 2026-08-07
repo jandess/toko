@@ -125,18 +125,31 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      padding: 7px 12px;
+      gap: 4px;
+      padding: 7px 10px;
       border-radius: 10px;
       font-size: 12px;
       font-weight: 700;
       transition: all 0.2s;
       cursor: pointer;
-      shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .action-btn:active {
       transform: scale(0.95);
+    }
+
+    @media (max-width: 400px) {
+      .action-btn {
+        padding: 6px 7px;
+        font-size: 10px;
+        gap: 2px;
+      }
+
+      .action-btn .material-symbols-outlined {
+        font-size: 14px !important;
+      }
     }
 
     .item-card {
@@ -255,27 +268,32 @@
 
   <div id="app" class="min-h-screen flex flex-col">
     <header
-      class="bg-white/90 backdrop-blur-lg border-b border-slate-100 fixed top-0 left-0 w-full z-50 h-[72px] px-5 flex items-center justify-between gap-2 shadow-xs">
-      <div class="flex items-center gap-2">
+      class="bg-white/90 backdrop-blur-lg border-b border-slate-100 fixed top-0 left-0 w-full z-50 h-[72px] px-3 md:px-5 flex items-center justify-between gap-2 shadow-xs">
+      <div class="flex items-center gap-2 shrink-0">
         <span class="material-symbols-outlined text-amber-600 text-2xl">admin_panel_settings</span>
+        <span class="hidden md:block text-sm font-bold text-slate-700">Admin Panel</span>
       </div>
-      <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+      <div class="flex items-center gap-1 md:gap-1.5 py-1">
         <button onclick="loadDataFromGithubPublic()"
           class="action-btn bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200">
-          <span class="material-symbols-outlined text-[16px]">cloud_download</span> Tarik
+          <span class="material-symbols-outlined text-[15px]">cloud_download</span>
+          <span>Tarik</span>
         </button>
         <label
           class="action-btn bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 cursor-pointer">
-          <span class="material-symbols-outlined text-[16px]">upload_file</span> Impor
+          <span class="material-symbols-outlined text-[15px]">upload_file</span>
+          <span>Impor</span>
           <input type="file" accept=".json" id="importFile" class="hidden" onchange="handleImport(event)" />
         </label>
         <button onclick="exportData()"
           class="action-btn bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200">
-          <span class="material-symbols-outlined text-[16px]">download</span> Ekspor
+          <span class="material-symbols-outlined text-[15px]">download</span>
+          <span>Ekspor</span>
         </button>
         <button onclick="pushDataToGithub()"
           class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm">
-          <span class="material-symbols-outlined text-[16px]">cloud_upload</span> Upload
+          <span class="material-symbols-outlined text-[15px]">cloud_upload</span>
+          <span>Upload</span>
         </button>
       </div>
     </header>
